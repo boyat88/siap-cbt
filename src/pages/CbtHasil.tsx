@@ -29,6 +29,7 @@ import {
   cn,
   useToast,
 } from '../components/ui'
+import { RichContent } from '../components/RichContent'
 import { useApp } from '../store/AppContext'
 import { useCbt } from '../store/CbtContext'
 import { exportExcel } from '../lib/excel'
@@ -492,7 +493,7 @@ export function CbtHasil() {
                       placeholder="0"
                     />
                   </div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{question.text}</p>
+                  <RichContent content={question.text} className="mt-2 text-sm text-slate-700" />
                 </div>
                 <div className="px-4 py-3">
                   <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -551,7 +552,7 @@ export function CbtHasil() {
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{question.text}</p>
+                    <RichContent content={question.text} className="mt-2 text-sm text-slate-700" />
                   </div>
                   <div className="space-y-1.5 px-4 py-3">
                     {question.type === 'pg' ? (
@@ -573,7 +574,7 @@ export function CbtHasil() {
                             )}
                           >
                             <span className="text-[11px] font-bold">{OPTION_LABELS[displayIndex]}.</span>
-                            <span className="flex-1">{question.options[originalIndex]}</span>
+                            <RichContent content={question.options[originalIndex]} className="flex-1" />
                             {isPicked && (
                               <span className="text-[10px] font-bold uppercase">
                                 {isCorrect ? '✓ Jawaban siswa' : '✗ Jawaban siswa'}

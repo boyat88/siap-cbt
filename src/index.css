@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* KaTeX untuk render rumus matematika */
+@import 'katex/dist/katex.min.css';
+
 /*
  * Font Inter disimpan lokal (public/fonts) supaya tampilan tidak menunggu
  * unduhan dari Google Fonts, termasuk saat komputer offline.

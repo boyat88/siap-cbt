@@ -20,6 +20,7 @@ import {
   cn,
   useToast,
 } from '../components/ui'
+import { RichContent } from '../components/RichContent'
 import { useApp } from '../store/AppContext'
 import { useCbt } from '../store/CbtContext'
 import {
@@ -615,7 +616,7 @@ export function Ujian() {
                     Terjawab {progress.answered} dari {progress.total}
                   </span>
                 </div>
-                <p className="whitespace-pre-wrap text-base font-medium leading-relaxed text-navy-950">{q.text}</p>
+                <RichContent content={q.text} className="text-base font-medium leading-relaxed text-navy-950" />
 
                 {isPg ? (
                   <div className="mt-4 space-y-2.5">
@@ -640,7 +641,7 @@ export function Ujian() {
                           >
                             {OPTION_LABELS[displayIndex]}
                           </span>
-                          <span className="flex-1 text-sm text-slate-700">{q.options[originalIndex]}</span>
+                          <RichContent content={q.options[originalIndex]} className="flex-1 text-sm text-slate-700" />
                         </button>
                       )
                     })}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  FileUp,
   Play,
   Plus,
   RefreshCw,
@@ -21,6 +22,7 @@ import {
   CardHeader,
   Input,
   Label,
+  Modal,
   PageHeader,
   Select,
   Textarea,
@@ -32,6 +34,7 @@ import { useApp } from '../store/AppContext'
 import { useCbt } from '../store/CbtContext'
 import { SUBJECTS } from '../lib/constants'
 import { OPTION_LABELS, examTotalPoints, generateToken } from '../lib/cbt'
+import { importQuestionsFromFile, detectFormat } from '../lib/importQuestions'
 import type { CbtExam, CbtQuestion, CbtQuestionType } from '../types'
 
 const MAX_OPTIONS = 4
@@ -62,6 +65,41 @@ export function CbtEditor() {
 
   const [draft, setDraft] = useState<CbtExam | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // State untuk impor soal dari file (Word/Excel/PDF).
+  const [importOpen, setImportOpen] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importPreview, setImportPreview] = useState<CbtQuestion[] | null>(null)
+  const [importFileName, setImportFileName] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImportFile = async (file: File) => {
+    setImportError(null)
+    setImportPreview(null)
+    setImportFileName(file.name)
+    setImportLoading(true)
+    try {
+      const questions = await importQuestionsFromFile(file)
+      setImportPreview(questions)
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : 'Gagal membaca file.')
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
+  const handleConfirmImport = () => {
+    if (!importPreview || importPreview.length === 0) return
+    setDraft((prev) =>
+      prev ? { ...prev, questions: [...prev.questions, ...importPreview] } : prev,
+    )
+    setImportOpen(false)
+    setImportPreview(null)
+    setImportFileName('')
+    setImportError(null)
+    toast(`${importPreview.length} soal berhasil diimpor.`, 'success')
+  }
 
   // Inisialisasi draf: dari ujian yang ada (sunting) atau template baru.
   useEffect(() => {
@@ -426,6 +464,10 @@ export function CbtEditor() {
               description="Soal pilihan ganda dinilai otomatis; esai dinilai guru di halaman Hasil."
               action={
                 <div className="flex flex-wrap gap-2">
+                  <Button variant="soft" size="sm" onClick={() => setImportOpen(true)}>
+                    <FileUp size={13} />
+                    Impor Soal
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => addQuestion('pg')}>
                     <Plus size={13} />
                     Soal PG
@@ -586,6 +628,147 @@ export function CbtEditor() {
           </Card>
         </div>
       </div>
+
+      {/* Modal impor soal dari file Word/Excel/PDF */}
+      <Modal
+        open={importOpen}
+        onClose={() => {
+          setImportOpen(false)
+          setImportPreview(null)
+          setImportFileName('')
+          setImportError(null)
+        }}
+        title="Impor Soal dari File"
+        description="Unggah file Word (.docx), Excel (.xlsx/.csv), atau PDF. Soal akan diparsing otomatis."
+        size="lg"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => {
+                setImportOpen(false)
+                setImportPreview(null)
+                setImportFileName('')
+                setImportError(null)
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              size="md"
+              onClick={handleConfirmImport}
+              disabled={!importPreview || importPreview.length === 0}
+            >
+              Impor {importPreview ? `(${importPreview.length} soal)` : ''}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".docx,.doc,.xlsx,.xls,.csv,.pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) void handleImportFile(file)
+                e.target.value = ''
+              }}
+            />
+            <Button
+              variant="outline"
+              size="md"
+              className="w-full"
+              loading={importLoading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FileUp size={15} />
+              {importFileName ? importFileName : 'Pilih File (Word/Excel/PDF)'}
+            </Button>
+          </div>
+
+          {importError && (
+            <Alert tone="danger" title="Gagal membaca file">
+              {importError}
+            </Alert>
+          )}
+
+          {importLoading && (
+            <div className="flex items-center justify-center py-6 text-sm text-slate-500">
+              Membaca file...
+            </div>
+          )}
+
+          {importPreview && importPreview.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                Preview {importPreview.length} soal terdeteksi
+              </p>
+              <div className="max-h-[40vh] space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+                {importPreview.map((q, idx) => (
+                  <div key={q.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-navy-900 text-[11px] font-bold text-white">
+                        {idx + 1}
+                      </span>
+                      <Badge tone={q.type === 'pg' ? 'brand' : 'violet'}>
+                        {q.type === 'pg' ? 'PG' : 'Esai'} · {q.points} poin
+                      </Badge>
+                    </div>
+                    <div
+                      className="text-sm text-slate-700"
+                      dangerouslySetInnerHTML={{ __html: q.text }}
+                    />
+                    {q.type === 'pg' && (
+                      <div className="mt-2 space-y-1">
+                        {q.options.map((opt, oi) => (
+                          <div
+                            key={oi}
+                            className={cn(
+                              'flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs',
+                              q.answer === String(oi)
+                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                                : 'border-slate-200 text-slate-600',
+                            )}
+                          >
+                            <span className="font-bold">{OPTION_LABELS[oi]}.</span>
+                            <span dangerouslySetInnerHTML={{ __html: opt || '(kosong)' }} />
+                            {q.answer === String(oi) && (
+                              <span className="ml-auto text-[10px] font-bold text-emerald-600">Kunci</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400">
+                Periksa preview di atas. Soal akan ditambahkan ke bank soal setelah Anda klik "Impor".
+              </p>
+            </div>
+          )}
+
+          {!importPreview && !importLoading && !importError && (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center">
+              <p className="text-xs text-slate-500">
+                Format yang didukung:
+              </p>
+              <ul className="mt-2 space-y-1 text-[11px] text-slate-400">
+                <li><strong>Excel (.xlsx/.csv):</strong> kolom Pertanyaan, Opsi A-D, Jawaban (A-D), Poin, Tipe</li>
+                <li><strong>Word (.docx):</strong> soal bernomor (1., 2., ...) dengan opsi A/B/C/D</li>
+                <li><strong>PDF:</strong> teks soal bernomor dengan opsi A/B/C/D</li>
+              </ul>
+              <p className="mt-3 text-[11px] text-amber-600">
+                Gambar, rumus matematika, dan kode akan dipertahankan sebaik mungkin. Untuk hasil terbaik gunakan format Excel terstruktur.
+              </p>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }
