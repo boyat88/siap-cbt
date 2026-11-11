@@ -200,6 +200,12 @@ export interface CbtAttempt {
   finalScore?: number
   gradedBy?: string
   gradedAt?: string
+  /** Apakah admin mengizinkan siswa mengulang ujian ini. */
+  retakeApproved?: boolean
+  retakeApprovedBy?: string
+  retakeApprovedAt?: string
+  /** ID attempt sebelumnya (jika ini adalah attempt ulang). */
+  previousAttemptId?: string
   updatedAt: string
 }
 

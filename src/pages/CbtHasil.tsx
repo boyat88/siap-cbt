@@ -334,7 +334,12 @@ export function CbtHasil() {
                         <div className="flex items-center gap-3">
                           <Avatar name={attempt.studentName} size="sm" />
                           <div>
-                            <p className="font-semibold text-navy-950">{attempt.studentName}</p>
+                            <p className="font-semibold text-navy-950">
+                              {attempt.studentName}
+                              {attempt.previousAttemptId && (
+                                <Badge tone="amber" className="ml-1.5">Ulang</Badge>
+                              )}
+                            </p>
                             <p className="text-[11px] text-slate-400">
                               Kelas {attempt.className} · NISN {attempt.studentId.replace(/^s_/, '')}
                             </p>
@@ -430,6 +435,29 @@ export function CbtHasil() {
                               <PenLine size={13} />
                               Nilai Esai
                             </Button>
+                          )}
+                          {attempt.status !== 'berlangsung' && !attempt.retakeApproved && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const next: CbtAttempt = {
+                                  ...attempt,
+                                  retakeApproved: true,
+                                  retakeApprovedBy: user?.name ?? 'Admin',
+                                  retakeApprovedAt: new Date().toISOString(),
+                                  updatedAt: new Date().toISOString(),
+                                }
+                                cbt.upsertAttempt(next, true)
+                                toast(`Pengulangan diizinkan untuk ${attempt.studentName}.`, 'success')
+                              }}
+                            >
+                              <RotateCcw size={13} />
+                              Izinkan Ulang
+                            </Button>
+                          )}
+                          {attempt.retakeApproved && (
+                            <Badge tone="amber">Ulang diizinkan</Badge>
                           )}
                           <Button
                             variant="ghost"
@@ -560,7 +588,6 @@ export function CbtHasil() {
                     )}
                   {question.stimulus && (
                       <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2">
-                        <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">Instruksi / Bacaan</p>
                         <RichContent content={question.stimulus} className="text-xs text-slate-700" />
                       </div>
                     )}

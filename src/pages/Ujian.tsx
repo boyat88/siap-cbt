@@ -370,23 +370,73 @@ export function Ujian() {
         return
       }
 
-      const existing = cbt.attempts.find((a) => a.examId === examFound.id && a.studentId === studentFound.id)
-      if (existing) {
-        if (existing.status === 'berlangsung') {
-          setExam(examFound)
-          setStudent(studentFound)
-          setAttemptId(existing.id)
-          attemptRef.current = existing
-          setCurrentIndex(0)
-          setPhase('ujian')
-          return
-        }
-        // Sudah selesai / didiskualifikasi.
+      const existingAttempts = cbt.attempts.filter((a) => a.examId === examFound.id && a.studentId === studentFound.id)
+      // attempts diurutkan updatedAt desc, jadi index 0 adalah yang terbaru.
+      const latestAttempt = existingAttempts.length > 0 ? existingAttempts[0] : null
+
+      if (latestAttempt && latestAttempt.status === 'berlangsung') {
         setExam(examFound)
         setStudent(studentFound)
-        setAttemptId(existing.id)
-        attemptRef.current = existing
-        setDisqualified(existing.status === 'diskualifikasi')
+        setAttemptId(latestAttempt.id)
+        attemptRef.current = latestAttempt
+        setCurrentIndex(0)
+        setPhase('ujian')
+        return
+      }
+
+      // Sudah selesai / didiskualifikasi.
+      if (latestAttempt && (latestAttempt.status === 'selesai' || latestAttempt.status === 'diskualifikasi')) {
+        // Cek apakah admin mengizinkan pengulangan.
+        if (latestAttempt.retakeApproved) {
+          // Buat attempt baru untuk pengulangan.
+          const retakeNum = existingAttempts.length
+          const nowIso = new Date().toISOString()
+          const questionOrder = examFound.shuffleQuestions
+            ? [...examFound.questions.map((q) => q.id)].sort(() => Math.random() - 0.5)
+            : examFound.questions.map((q) => q.id)
+          const optionOrder: Record<string, number[]> = {}
+          for (const q of examFound.questions) {
+            if (q.type !== 'pg') continue
+            const indices = q.options.map((_, i) => i)
+            optionOrder[q.id] = examFound.shuffleOptions
+              ? indices.sort(() => Math.random() - 0.5)
+              : indices
+          }
+          const newAttempt: CbtAttempt = {
+            id: `att_${examFound.id}_${studentFound.id}_r${retakeNum}`,
+            examId: examFound.id,
+            studentId: studentFound.id,
+            studentName: studentFound.name,
+            classId: studentFound.classId,
+            className: data.classes.find((c) => c.id === studentFound.classId)?.name ?? '',
+            startedAt: nowIso,
+            expiresAt: new Date(Date.now() + examFound.durationMinutes * 60000).toISOString(),
+            questionOrder,
+            optionOrder,
+            answers: {},
+            status: 'berlangsung',
+            violations: [],
+            previousAttemptId: latestAttempt.id,
+            updatedAt: nowIso,
+          }
+          cbt.upsertAttempt(newAttempt, true)
+          localStorage.setItem(ACTIVE_KEY, newAttempt.id)
+          setExam(examFound)
+          setStudent(studentFound)
+          setAttemptId(newAttempt.id)
+          attemptRef.current = newAttempt
+          setCurrentIndex(0)
+          setPhase('ujian')
+          toast('Pengulangan ujian diizinkan oleh administrator.', 'info')
+          return
+        }
+
+        // Tidak diizinkan mengulang.
+        setExam(examFound)
+        setStudent(studentFound)
+        setAttemptId(latestAttempt.id)
+        attemptRef.current = latestAttempt
+        setDisqualified(latestAttempt.status === 'diskualifikasi')
         setPhase('selesai')
         return
       }
@@ -624,7 +674,6 @@ export function Ujian() {
                 </div>
                 {q.stimulus && (
                   <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
-                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">Instruksi / Bacaan</p>
                     <RichContent content={q.stimulus} className="text-sm leading-relaxed text-slate-700" />
                   </div>
                 )}
@@ -826,6 +875,11 @@ export function Ujian() {
                 <p className="mt-2 text-sm text-slate-600">
                   Jawaban Anda telah terkumpul pada {finalAttempt?.submittedAt ? formatTime(finalAttempt.submittedAt) : '-'}.
                 </p>
+                {finalAttempt?.previousAttemptId && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Ini adalah attempt pengulangan.
+                  </p>
+                )}
               </>
             )}
 
