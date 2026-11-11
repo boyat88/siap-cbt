@@ -616,6 +616,12 @@ export function Ujian() {
                     Terjawab {progress.answered} dari {progress.total}
                   </span>
                 </div>
+                {q.stimulus && (
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
+                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">Instruksi / Bacaan</p>
+                    <RichContent content={q.stimulus} className="text-sm leading-relaxed text-slate-700" />
+                  </div>
+                )}
                 <RichContent content={q.text} className="text-base font-medium leading-relaxed text-navy-950" />
 
                 {isPg ? (

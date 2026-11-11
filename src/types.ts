@@ -133,6 +133,8 @@ export type CbtViolationType = 'leave-screen' | 'switch-tab' | 'exit-fullscreen'
 export interface CbtQuestion {
   id: string
   type: CbtQuestionType
+  /** Teks instruksi/stimulus yang ditampilkan sebelum soal (mis. "Bacalah teks berikut!"). */
+  stimulus?: string
   text: string
   /** Opsi jawaban untuk PG (A-D). */
   options: string[]

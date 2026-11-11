@@ -5,6 +5,28 @@
 /* KaTeX untuk render rumus matematika */
 @import 'katex/dist/katex.min.css';
 
+/* Kode program dalam soal */
+.prose-code pre, .prose-code code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+.prose-code pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.prose-code code:not(pre code) {
+  background: #f1f5f9;
+  color: #1e293b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 /*
  * Font Inter disimpan lokal (public/fonts) supaya tampilan tidak menunggu
  * unduhan dari Google Fonts, termasuk saat komputer offline.

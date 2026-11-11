@@ -43,6 +43,7 @@ function emptyQuestion(type: CbtQuestionType): CbtQuestion {
   return {
     id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     type,
+    stimulus: '',
     text: '',
     options: type === 'pg' ? ['', '', '', ''] : [],
     answer: type === 'pg' ? undefined : undefined,
@@ -252,6 +253,7 @@ export function CbtEditor() {
       maxViolations: Math.round(draft.maxViolations),
       questions: draft.questions.map((question) => ({
         ...question,
+        stimulus: (question.stimulus ?? '').trim() || undefined,
         text: question.text.trim(),
         options: question.options.map((option) => option.trim()),
         points: Math.round(question.points),
@@ -558,6 +560,12 @@ export function CbtEditor() {
                     </div>
 
                     <div className="space-y-3 px-4 py-3.5">
+                      <Textarea
+                        label="Instruksi / Stimulus (opsional)"
+                        placeholder="cth. Bacalah teks berikut dengan saksama! atau Pilihlah salah satu jawaban yang paling benar!"
+                        value={question.stimulus ?? ''}
+                        onChange={(e) => updateQuestion(question.id, { stimulus: e.target.value })}
+                      />
                       <Textarea
                         label="Teks Soal"
                         placeholder={

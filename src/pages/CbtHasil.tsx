@@ -552,6 +552,12 @@ export function CbtHasil() {
                         </span>
                       )}
                     </div>
+                    {question.stimulus && (
+                      <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2">
+                        <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">Instruksi / Bacaan</p>
+                        <RichContent content={question.stimulus} className="text-xs text-slate-700" />
+                      </div>
+                    )}
                     <RichContent content={question.text} className="mt-2 text-sm text-slate-700" />
                   </div>
                   <div className="space-y-1.5 px-4 py-3">

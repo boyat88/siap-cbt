@@ -86,7 +86,8 @@ export function RichContent({ content, className }: RichContentProps) {
     return (
       <div
         ref={ref}
-        className={className}
+        className={`${className ?? ''} prose-code`}
+        style={{ whiteSpace: 'pre-wrap' }}
         dangerouslySetInnerHTML={{ __html: content }}
       />
     )
@@ -102,7 +103,8 @@ export function RichContent({ content, className }: RichContentProps) {
   return (
     <div
       ref={ref}
-      className={className}
+      className={`${className ?? ''} prose-code`}
+      style={{ whiteSpace: 'pre-wrap' }}
       dangerouslySetInnerHTML={{ __html: escaped }}
     />
   )
