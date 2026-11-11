@@ -123,14 +123,49 @@ export async function importFromWord(file: File): Promise<CbtQuestion[]> {
   const html = result.value
   if (!html.trim()) throw new Error('Dokumen Word kosong atau tidak dapat dibaca.')
 
-  // Pecah HTML menjadi blok paragraf.
+  // Pecah HTML menjadi blok paragraf. Bersihkan atribut yang tidak perlu.
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
+
+  /** Bersihkan elemen: hapus atribut class/style, pertahankan tag dasar. */
+  function cleanElement(el: Element): string {
+    const tag = el.tagName.toLowerCase()
+    // Tag yang dipertahankan apa adanya.
+    if (tag === 'img') {
+      const src = el.getAttribute('src') ?? ''
+      const alt = el.getAttribute('alt') ?? 'gambar'
+      return `<img src="${src}" alt="${alt}" style="max-width:100%;height:auto;margin:8px 0;" />`
+    }
+    if (tag === 'br') return '<br />'
+    if (tag === 'hr') return '<hr />'
+    // Tag pembungkus: ambil innerHTML yang sudah dibersihkan.
+    const inner = Array.from(el.childNodes)
+      .map((child) => {
+        if (child.nodeType === Node.TEXT_NODE) return child.textContent ?? ''
+        if (child.nodeType === Node.ELEMENT_NODE) return cleanElement(child as Element)
+        return ''
+      })
+      .join('')
+    if (tag === 'strong' || tag === 'b') return `<strong>${inner}</strong>`
+    if (tag === 'em' || tag === 'i') return `<em>${inner}</em>`
+    if (tag === 'u') return `<u>${inner}</u>`
+    if (tag === 'code') return `<code>${inner}</code>`
+    if (tag === 'pre') return `<pre>${inner}</pre>`
+    if (tag === 'a') {
+      const href = el.getAttribute('href') ?? ''
+      return `<a href="${href}" target="_blank" rel="noopener">${inner}</a>`
+    }
+    // Paragraf, div, li, dll. -> paragraf
+    if (inner.trim() === '') return ''
+    return `<p>${inner}</p>`
+  }
+
   const blocks: { tag: string; html: string }[] = []
   doc.body.childNodes.forEach((node) => {
     if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as HTMLElement
-      blocks.push({ tag: el.tagName.toLowerCase(), html: el.outerHTML })
+      const cleaned = cleanElement(el)
+      if (cleaned.trim()) blocks.push({ tag: el.tagName.toLowerCase(), html: cleaned })
     } else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
       blocks.push({ tag: 'p', html: `<p>${node.textContent.trim()}</p>` })
     }
@@ -165,16 +200,17 @@ export async function importFromWord(file: File): Promise<CbtQuestion[]> {
 
     if (qMatch) {
       flush()
-      current = { text: block.html.replace(/^\s*\d+[.)]\s*/, ''), options: [], points: 1 }
-      // Hapus nomor dari awal teks (sudah di regex)
-      const cleaned = block.html.replace(/^(\s*<[^>]+>)?\s*\d+[.)]\s*/, '$1')
-      current.text = cleaned || block.html
+      // Hapus nomor dari awal teks di dalam HTML (mis. <p>1. Teks</p> -> <p>Teks</p>).
+      const cleaned = block.html.replace(/^(<[^>]+>)\s*\d+[.)]\s*/, '$1')
+      current = { text: cleaned || block.html, options: [], points: 1 }
     } else if (oMatch && current) {
       const letter = oMatch[1].toUpperCase()
       const idx = 'ABCDE'.indexOf(letter)
       // Pastikan array options cukup panjang.
       while (current.options.length <= idx) current.options.push('')
-      current.options[idx] = block.html.replace(/^[A-E][.)]\s*/i, '')
+      // Hapus huruf opsi dari awal teks di dalam HTML (mis. <p>A. Teks</p> -> <p>Teks</p>).
+      const cleanedOpt = block.html.replace(/^(<[^>]+>)\s*[A-E][.)]\s*/i, '$1')
+      current.options[idx] = cleanedOpt || block.html
       // Deteksi kunci jawaban jika opsi diakhiri dengan tanda (benar/kunci).
       if (/\(kunci\)|\(benar\)|\*$/i.test(text)) {
         current.answer = String(idx)
@@ -182,7 +218,7 @@ export async function importFromWord(file: File): Promise<CbtQuestion[]> {
       }
     } else if (current) {
       // Lanjutan teks soal (paragraf tambahan / gambar).
-      current.text += '\n' + block.html
+      current.text += block.html
     } else {
       // Blok sebelum soal pertama — abaikan atau jadikan soal.
       if (text) {

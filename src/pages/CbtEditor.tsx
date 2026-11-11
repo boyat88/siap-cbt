@@ -35,6 +35,7 @@ import { useCbt } from '../store/CbtContext'
 import { SUBJECTS } from '../lib/constants'
 import { OPTION_LABELS, examTotalPoints, generateToken } from '../lib/cbt'
 import { importQuestionsFromFile, detectFormat } from '../lib/importQuestions'
+import { RichContent } from '../components/RichContent'
 import type { CbtExam, CbtQuestion, CbtQuestionType } from '../types'
 
 const MAX_OPTIONS = 4
@@ -567,15 +568,21 @@ export function CbtEditor() {
                         onChange={(e) => updateQuestion(question.id, { stimulus: e.target.value })}
                       />
                       <Textarea
-                        label="Teks Soal"
+                        label="Teks Soal (boleh berisi HTML dari impor)"
                         placeholder={
                           question.type === 'pg'
-                            ? 'cth. Hasil dari -12 + 8 adalah...'
+                            ? 'cth. Hasil dari -12 + 8 adalah... atau <strong>teks tebal</strong>'
                             : 'cth. Jelaskan proses terjadinya hujan...'
                         }
                         value={question.text}
                         onChange={(e) => updateQuestion(question.id, { text: e.target.value })}
                       />
+                      {question.text && /<[a-z]/i.test(question.text) && (
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+                          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Preview (hasil render):</p>
+                          <RichContent content={question.text} className="text-sm text-slate-700" />
+                        </div>
+                      )}
 
                       {question.type === 'pg' && (
                         <div>
