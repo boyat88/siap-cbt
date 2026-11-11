@@ -39,9 +39,24 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = '120p
     handleInput()
   }
 
-  const insertImage = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const insertImageFromUrl = () => {
     const url = window.prompt('URL gambar (atau data URL):')
     if (url) exec('insertImage', url)
+  }
+
+  const insertImageFromFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('File harus berupa gambar (PNG/JPG).')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      if (dataUrl) exec('insertImage', dataUrl)
+    }
+    reader.readAsDataURL(file)
   }
 
   const buttons: { label: string; cmd: string; val?: string; title: string }[] = [
@@ -85,12 +100,31 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = '120p
         </button>
         <button
           type="button"
-          title="Sisipkan gambar"
-          onMouseDown={(e) => { e.preventDefault(); insertImage() }}
+          title="Sisipkan gambar dari URL"
+          onMouseDown={(e) => { e.preventDefault(); insertImageFromUrl() }}
           className="flex h-7 px-2 items-center justify-center rounded-md text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
         >
-          🖼 Gambar
+          🔗 URL
         </button>
+        <button
+          type="button"
+          title="Sisipkan gambar dari file (PNG/JPG)"
+          onMouseDown={(e) => { e.preventDefault(); fileInputRef.current?.click() }}
+          className="flex h-7 px-2 items-center justify-center rounded-md text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+        >
+          🖼 File
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) insertImageFromFile(file)
+            e.target.value = ''
+          }}
+        />
         <button
           type="button"
           title="Kode"
