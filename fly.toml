@@ -1,0 +1,28 @@
+# fly.toml — Deploy gratis ke Fly.io (https://fly.io)
+# Free tier: 3 shared VM (256MB), 3GB persistent volume, HTTPS otomatis.
+# Deploy: fly launch --no-deploy (sekali), lalu fly deploy
+
+app = "siap-cbt"
+primary_region = "sin" # Singapore (terdekat Indonesia)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"   # hemat resource saat tidak dipakai
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "cbt_data"
+  destination = "/app/server-data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

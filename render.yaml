@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: siap-cbt
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: node server.cjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    disk:
+      name: cbt-data
+      mountPath: /app/server-data
+      sizeGB: 1
+    healthCheckPath: /api/state

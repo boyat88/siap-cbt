@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  cbt:
+    build: .
+    container_name: siap-cbt
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      # Data persisten: ujian, absensi, siswa, dll. tidak hilang saat restart
+      - cbt-data:/app/server-data
+
+volumes:
+  cbt-data:
+    driver: local

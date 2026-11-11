@@ -1,0 +1,733 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Font Inter disimpan lokal (public/fonts) supaya tampilan tidak menunggu
+ * unduhan dari Google Fonts, termasuk saat komputer offline.
+ */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+}
+
+:root {
+  /* Skala warna tema (fallback biru). Nilai asli diatur oleh ThemeProvider. */
+  --brand-50: 239 246 255;
+  --brand-100: 219 234 254;
+  --brand-200: 191 219 254;
+  --brand-300: 147 197 253;
+  --brand-400: 96 165 250;
+  --brand-500: 59 130 246;
+  --brand-600: 37 99 235;
+  --brand-700: 29 78 216;
+  --brand-800: 30 64 175;
+  --brand-900: 30 58 138;
+  --brand-950: 23 37 84;
+
+  --surface-alpha: 0.86;
+  --glass-blur: 14px;
+
+  --app-bg-image: radial-gradient(1100px 620px at 8% -10%, rgb(var(--brand-400) / 0.42), transparent 62%),
+    radial-gradient(900px 700px at 92% 8%, rgba(168, 85, 247, 0.3), transparent 60%),
+    radial-gradient(1000px 800px at 55% 110%, rgba(56, 189, 248, 0.34), transparent 62%),
+    linear-gradient(150deg, #f4f8ff 0%, #f8fafc 50%, #eef6ff 100%);
+  --app-bg-size: cover;
+  --app-bg-position: center;
+  --app-bg-repeat: no-repeat;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply text-slate-900 antialiased;
+  position: relative;
+  min-height: 100vh;
+  background-color: rgb(248 250 252);
+  font-feature-settings: 'ss01' on, 'ss02' on, 'cv01' on;
+}
+
+/* Lapisan latar belakang aplikasi (gradien / pola / foto). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--app-bg-image);
+  background-size: var(--app-bg-size);
+  background-position: var(--app-bg-position);
+  background-repeat: var(--app-bg-repeat);
+  transition: background-image 0.5s ease;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--brand-500) / 0.35) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--brand-500) / 0.3);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--brand-500) / 0.5);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.glass-panel {
+  @apply bg-white/80 backdrop-blur-xl;
+}
+
+::selection {
+  background-color: rgb(var(--brand-200));
+  color: rgb(var(--brand-950));
+}
+
+/* ------------------------------------------------------------------ */
+/* Mode transparan (glass)                                             */
+/* ------------------------------------------------------------------ */
+
+html[data-glass='on'] .bg-white {
+  background-color: rgb(255 255 255 / var(--surface-alpha));
+}
+
+html[data-glass='on'] .bg-slate-50 {
+  background-color: rgb(248 250 252 / var(--surface-alpha));
+}
+
+html[data-glass='on'] .bg-slate-100 {
+  background-color: rgb(241 245 249 / var(--surface-alpha));
+}
+
+html[data-glass='on'] .bg-navy-950 {
+  background-color: rgb(10 28 51 / calc(0.6 + var(--surface-alpha) * 0.4));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Foto latar membutuhkan efek kaca agar teks tetap nyaman dibaca. */
+html[data-app-bg='image'][data-glass='on'] .bg-white {
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+html[data-app-bg='image'][data-glass='on'] .bg-slate-50:not([data-app-shell]) {
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+/*
+ * Catatan: pembungkus utama aplikasi (data-app-shell) sengaja TIDAK diberi
+ * backdrop-filter. Efek itu membuat elemen berposisi fixed (sidebar, menu
+ * bawah, dsb.) ikut tergulir bersama halaman karena membentuk containing block.
+ */
+
+/* Foto latar kustom hanya menutup area konten, tidak sampai ke menu samping. */
+@media (min-width: 1024px) {
+  html[data-app-bg='image'][data-sidebar='open'] body::before {
+    left: 260px;
+  }
+}
+
+/* Menu samping tetap pekat (tidak ikut transparan) saat memakai foto latar. */
+html[data-app-bg='image'] .bg-navy-950 {
+  background-color: rgb(10 28 51);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Kontras otomatis warna teks                                         */
+/* ------------------------------------------------------------------ */
+/*
+ * Atribut data-content-fg / data-header-fg / data-menu-fg dihitung oleh
+ * applyTheme() berdasarkan warna header/menu dan kecerahan latar (termasuk
+ * transparansi). Aturan di bawah hanya aktif saat teks perlu dibalik agar
+ * tetap kontras, mis. menu kuning -> teks gelap.
+ */
+
+@media screen {
+/* ---- Konten: latar gelap / transparansi tinggi -> teks terang ---- */
+html[data-content-fg='light'] [data-content-body] {
+  color: #e2e8f0;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-navy-950,
+    .text-navy-900,
+    .text-navy-700,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700
+  ) {
+  color: #f1f5f9;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.text-slate-600, .text-slate-300, .text-slate-100) {
+  color: #dbe4ef;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.text-slate-500, .text-slate-400) {
+  color: #b9c6d6;
+}
+
+html[data-content-fg='light'] [data-content-body] .placeholder\:text-slate-400::placeholder {
+  color: rgb(185 198 214 / 0.7);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .bg-white,
+    [class~='bg-white/60'],
+    [class~='bg-white/70'],
+    [class~='bg-white/80'],
+    [class~='bg-white/85'],
+    [class~='bg-white/90'],
+    [class~='bg-white/95']
+  ) {
+  background-color: rgb(15 23 42 / 0.55);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .bg-slate-50,
+    [class~='bg-slate-50/50'],
+    [class~='bg-slate-50/60'],
+    [class~='bg-slate-50/70'],
+    [class~='bg-slate-50/80'],
+    [class~='disabled:bg-slate-50']
+  ) {
+  background-color: rgb(30 41 59 / 0.5);
+}
+
+html[data-content-fg='light'] [data-content-body] .bg-slate-100 {
+  background-color: rgb(51 65 85 / 0.55);
+}
+
+html[data-content-fg='light'] [data-content-body] .bg-slate-200 {
+  background-color: rgb(71 85 105 / 0.6);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .hover\:bg-slate-50:hover,
+    [class~='hover:bg-slate-50/60']:hover,
+    [class~='hover:bg-slate-50/70']:hover,
+    [class~='hover:bg-slate-50/80']:hover,
+    .hover\:bg-slate-100:hover,
+    .hover\:bg-white:hover,
+    [class~='hover:bg-white/10']:hover,
+    [class~='hover:bg-white/15']:hover,
+    [class~='hover:bg-white/25']:hover
+  ) {
+  background-color: rgb(51 65 85 / 0.6);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .border-slate-50,
+    .border-slate-100,
+    .border-slate-200,
+    [class~='border-slate-200/80'],
+    .border-slate-300
+  ) {
+  border-color: rgb(255 255 255 / 0.15);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .hover\:border-slate-200:hover,
+    .hover\:border-slate-300:hover
+  ) {
+  border-color: rgb(255 255 255 / 0.3);
+}
+
+html[data-content-fg='light'] [data-content-body] .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(255 255 255 / 0.12);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .ring-slate-200,
+    [class~='ring-slate-200/80'],
+    .ring-slate-300,
+    .ring-white
+  ) {
+  --tw-ring-color: rgb(255 255 255 / 0.18);
+}
+
+/*
+ * Warna aksen (chip, badge, ikon status) ikut dibuat transparan-gelap agar
+ * teks berwarna tetap terbaca di atas latar gelap.
+ */
+html[data-content-fg='light'] [data-content-body] :is(
+    .bg-brand-50,
+    [class~='bg-brand-50/30'],
+    [class~='bg-brand-50/60'],
+    [class~='bg-brand-50/70'],
+    .bg-brand-100
+  ) {
+  background-color: rgb(var(--brand-500) / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .bg-emerald-50,
+    [class~='bg-emerald-50/40'],
+    .bg-emerald-100
+  ) {
+  background-color: rgb(16 185 129 / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.bg-amber-50, .bg-amber-100) {
+  background-color: rgb(245 158 11 / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .bg-rose-50,
+    [class~='bg-rose-50/60'],
+    [class~='bg-rose-50/70'],
+    .bg-rose-100
+  ) {
+  background-color: rgb(244 63 94 / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.bg-sky-50, .bg-sky-100) {
+  background-color: rgb(14 165 233 / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.bg-violet-50, .bg-violet-100) {
+  background-color: rgb(139 92 246 / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] .bg-teal-100 {
+  background-color: rgb(20 184 166 / 0.2);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .hover\:bg-brand-50:hover,
+    [class~='hover:bg-brand-50/30']:hover,
+    [class~='hover:bg-brand-50/40']:hover,
+    [class~='hover:bg-brand-50/60']:hover,
+    .hover\:bg-brand-100:hover,
+    .hover\:bg-emerald-100:hover,
+    .hover\:bg-rose-50:hover,
+    .hover\:bg-rose-100:hover
+  ) {
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-brand-600,
+    .text-brand-700,
+    .text-brand-800
+  ) {
+  color: rgb(var(--brand-300));
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-emerald-600,
+    .text-emerald-700,
+    .text-emerald-800
+  ) {
+  color: #6ee7b7;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-amber-600,
+    .text-amber-700,
+    .text-amber-800
+  ) {
+  color: #fcd34d;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-rose-600,
+    .text-rose-700,
+    .text-rose-800
+  ) {
+  color: #fda4af;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-sky-600,
+    .text-sky-700,
+    .text-sky-800
+  ) {
+  color: #7dd3fc;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .text-violet-600,
+    .text-violet-700,
+    .text-violet-800
+  ) {
+  color: #c4b5fd;
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .border-brand-200,
+    .border-brand-300
+  ) {
+  border-color: rgb(var(--brand-400) / 0.4);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .border-emerald-100,
+    .border-emerald-200
+  ) {
+  border-color: rgb(16 185 129 / 0.4);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.border-amber-200) {
+  border-color: rgb(245 158 11 / 0.4);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .border-rose-100,
+    .border-rose-200,
+    [class~='border-rose-200/80'],
+    .border-rose-300
+  ) {
+  border-color: rgb(244 63 94 / 0.4);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(.border-sky-200, .border-violet-200) {
+  border-color: rgb(255 255 255 / 0.24);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    [class~='ring-brand-200/70'],
+    .ring-brand-300
+  ) {
+  --tw-ring-color: rgb(var(--brand-400) / 0.4);
+}
+
+html[data-content-fg='light'] [data-content-body] :is(
+    .ring-emerald-200,
+    .ring-amber-200,
+    .ring-rose-200,
+    .ring-sky-200,
+    .ring-violet-200
+  ) {
+  --tw-ring-color: rgb(255 255 255 / 0.24);
+}
+
+/* ---- Header: warna header gelap -> teks terang ---- */
+html[data-header-fg='light'] [data-header-surface] {
+  border-color: rgb(255 255 255 / 0.2);
+}
+
+html[data-header-fg='light'] [data-header-surface] :is(
+    .text-navy-950,
+    .text-navy-900,
+    .text-navy-700,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  color: #f8fafc;
+}
+
+html[data-header-fg='light'] [data-header-surface] :is(
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-slate-300
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  color: rgb(241 245 249 / 0.78);
+}
+
+html[data-header-fg='light'] [data-header-surface] :is(
+    .text-brand-500,
+    .text-brand-600,
+    .text-brand-700
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  color: rgb(var(--brand-200));
+}
+
+html[data-header-fg='light'] [data-header-surface] :is(
+    .bg-white,
+    .bg-slate-50,
+    .bg-slate-100
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  background-color: rgb(255 255 255 / 0.14);
+}
+
+html[data-header-fg='light'] [data-header-surface] :is(
+    .hover\:bg-slate-50:hover,
+    .hover\:bg-slate-100:hover
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  background-color: rgb(255 255 255 / 0.2);
+}
+
+html[data-header-fg='light'] [data-header-surface] :is(
+    .border-slate-200,
+    [class~='border-slate-200/80'],
+    .border-slate-100,
+    .border-slate-300
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  border-color: rgb(255 255 255 / 0.22);
+}
+
+/* ---- Menu: warna menu terang -> teks gelap ---- */
+html[data-menu-fg='dark'] [data-menu-surface] :is(
+    .text-white,
+    .text-slate-100,
+    .text-slate-300
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  color: #0f172a;
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] :is(
+    .text-slate-400,
+    .text-slate-500
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  color: #334155;
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] .text-brand-300:not(
+    [data-keep-surface],
+    [data-keep-surface] *
+  ) {
+  color: rgb(var(--brand-700));
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] .text-rose-400:not(
+    [data-keep-surface],
+    [data-keep-surface] *
+  ) {
+  color: #be123c;
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] :is(
+    .hover\:text-white:hover,
+    .hover\:text-slate-100:hover,
+    .group:hover .group-hover\:text-slate-300
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  color: #0f172a;
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] :is(
+    [class~='hover:bg-white/[0.045]']:hover,
+    [class~='hover:bg-white/[0.07]']:hover,
+    [class~='hover:bg-white/10']:hover,
+    [class~='hover:bg-white/15']:hover,
+    [class~='hover:bg-white/25']:hover
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  background-color: rgb(0 0 0 / 0.08);
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] :is(
+    [class~='bg-white/[0.045]'],
+    [class~='bg-white/10'],
+    [class~='bg-white/15'],
+    [class~='bg-white/20']
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  background-color: rgb(0 0 0 / 0.07);
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] :is(
+    [class~='border-white/[0.07]'],
+    [class~='border-white/10'],
+    [class~='border-white/15'],
+    [class~='border-white/20']
+  ):not([data-keep-surface], [data-keep-surface] *) {
+  border-color: rgb(0 0 0 / 0.16);
+}
+
+html[data-menu-fg='dark'] [data-menu-surface] .sidebar-glow {
+  opacity: 0.3;
+}
+
+/* Ikon menu aktif memakai warna inline; paksa gelap agar kontras di menu terang. */
+html[data-menu-fg='dark'] [data-menu-surface] nav a span[style] {
+  color: #0f172a !important;
+}
+}
+
+/* ------------------------------------------------------------------ */
+/* Animasi halaman & menu                                              */
+/* ------------------------------------------------------------------ */
+
+@keyframes route-progress {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  70% {
+    transform: scaleX(0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.route-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 70;
+  height: 3px;
+  transform-origin: left;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--brand-300)),
+    rgb(var(--brand-600)),
+    rgb(var(--brand-400)),
+    rgb(var(--brand-600))
+  );
+  background-size: 220% 100%;
+  animation:
+    route-progress 0.7s ease-out forwards,
+    gradient-pan 1.2s linear infinite;
+}
+
+.stagger-children > * {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 0.14s;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 0.18s;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 0.22s;
+}
+.stagger-children > *:nth-child(7) {
+  animation-delay: 0.26s;
+}
+.stagger-children > *:nth-child(8) {
+  animation-delay: 0.3s;
+}
+.stagger-children > *:nth-child(n + 9) {
+  animation-delay: 0.34s;
+}
+
+.nav-link {
+  position: relative;
+  overflow: hidden;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 50%, transparent 80%);
+  transform: translateX(-120%);
+  transition: transform 0.55s ease;
+  pointer-events: none;
+}
+
+.nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.nav-link:active {
+  transform: scale(0.975);
+}
+
+/* ------------------------------------------------------------------ */
+/* Slider tema                                                         */
+/* ------------------------------------------------------------------ */
+
+.theme-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgb(var(--brand-200)), rgb(var(--brand-500)));
+  outline: none;
+  cursor: pointer;
+}
+
+.theme-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 17px;
+  width: 17px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 3px solid rgb(var(--brand-600));
+  box-shadow: 0 1px 5px rgb(15 23 42 / 0.25);
+  transition: transform 0.15s ease;
+}
+
+.theme-range::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.theme-range::-moz-range-thumb {
+  height: 17px;
+  width: 17px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 3px solid rgb(var(--brand-600));
+  box-shadow: 0 1px 5px rgb(15 23 42 / 0.25);
+}
+
+.theme-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgb(var(--brand-200)), rgb(var(--brand-500)));
+}
+
+/* ------------------------------------------------------------------ */
+/* Lain-lain                                                           */
+/* ------------------------------------------------------------------ */
+
+.login-orb {
+  animation: float-slow 12s ease-in-out infinite;
+}
+
+.login-orb-delayed {
+  animation: float-slow 15s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+.success-ping {
+  animation: ping-soft 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
