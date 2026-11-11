@@ -618,16 +618,18 @@ export function CbtEditor() {
                                   >
                                     {OPTION_LABELS[optionIndex]}
                                   </button>
-                                  <input
-                                    value={option}
-                                    onChange={(e) => {
-                                      const options = [...question.options]
-                                      options[optionIndex] = e.target.value
-                                      updateQuestion(question.id, { options })
-                                    }}
+                                  <div className="flex-1">
+                                    <RichTextEditor
+                                      value={option}
+                                      onChange={(val) => {
+                                        const options = [...question.options]
+                                        options[optionIndex] = val
+                                        updateQuestion(question.id, { options })
+                                      }}
                                     placeholder={`Opsi ${OPTION_LABELS[optionIndex]}`}
-                                    className="h-9 flex-1 rounded-lg border-0 bg-transparent px-2 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-0"
-                                  />
+                                      minHeight="40px"
+                                    />
+                                  </div>
                                   {isCorrect && (
                                     <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">
                                       Kunci
