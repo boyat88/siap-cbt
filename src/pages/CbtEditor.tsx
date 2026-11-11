@@ -201,6 +201,25 @@ export function CbtEditor() {
     setDraft((prev) => (prev ? { ...prev, questions: [...prev.questions, emptyQuestion(type)] } : prev))
   }
 
+  const changeQuestionType = (id: string, newType: CbtQuestionType) => {
+    setDraft((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        questions: prev.questions.map((q) => {
+          if (q.id !== id) return q
+          if (q.type === newType) return q
+          return {
+            ...q,
+            type: newType,
+            options: newType === 'pg' ? (q.options.length >= 4 ? q.options.slice(0, 4) : ['', '', '', '']) : [],
+            answer: newType === 'pg' ? q.answer : undefined,
+          }
+        }),
+      }
+    })
+  }
+
   const removeQuestion = (id: string) => {
     setDraft((prev) => (prev ? { ...prev, questions: prev.questions.filter((q) => q.id !== id) } : prev))
   }
@@ -541,9 +560,15 @@ export function CbtEditor() {
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-navy-900 text-xs font-bold text-white">
                           {index + 1}
                         </span>
-                        <Badge tone={question.type === 'pg' ? 'brand' : 'violet'}>
-                          {question.type === 'pg' ? 'Pilihan Ganda' : 'Esai'}
-                        </Badge>
+                        <select
+                          value={question.type}
+                          onChange={(e) => changeQuestionType(question.id, e.target.value as CbtQuestionType)}
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                          title="Ubah jenis soal"
+                        >
+                          <option value="pg">Pilihan Ganda</option>
+                          <option value="essay">Esai</option>
+                        </select>
                         {error && <span className="text-[11px] font-medium text-rose-600">{error}</span>}
                       </div>
                       <div className="flex items-center gap-1">
