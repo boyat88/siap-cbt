@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  FileSpreadsheet,
   FileText,
   FileUp,
   Play,
@@ -35,6 +36,7 @@ import { useCbt } from '../store/CbtContext'
 import { SUBJECTS } from '../lib/constants'
 import { OPTION_LABELS, examTotalPoints, generateToken } from '../lib/cbt'
 import { importQuestionsFromFile, detectFormat } from '../lib/importQuestions'
+import { downloadExcelTemplate, downloadWordTemplate } from '../lib/downloadTemplate'
 import { RichContent } from '../components/RichContent'
 import { RichTextEditor } from '../components/RichTextEditor'
 import type { CbtExam, CbtQuestion, CbtQuestionType } from '../types'
@@ -734,6 +736,32 @@ export function CbtEditor() {
         }
       >
         <div className="space-y-4">
+          {/* Unduh template */}
+          <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-3">
+            <p className="mb-2 text-xs font-bold text-brand-700">Belum punya file? Unduh template:</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="soft"
+                size="sm"
+                onClick={() => void downloadExcelTemplate()}
+              >
+                <FileSpreadsheet size={13} />
+                Template Excel
+              </Button>
+              <Button
+                variant="soft"
+                size="sm"
+                onClick={() => void downloadWordTemplate()}
+              >
+                <FileText size={13} />
+                Template Word
+              </Button>
+            </div>
+            <p className="mt-2 text-[10px] text-slate-500">
+              Isi template sesuai format, lalu impor kembali. Kolom Stimulus untuk instruksi/bacaan sebelum soal.
+            </p>
+          </div>
+
           <div>
             <input
               ref={fileInputRef}
