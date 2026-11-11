@@ -47,6 +47,7 @@ function emptyQuestion(type: CbtQuestionType): CbtQuestion {
   return {
     id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     type,
+    sectionStimulus: '',
     stimulus: '',
     text: '',
     options: type === 'pg' ? ['', '', '', ''] : [],
@@ -300,6 +301,7 @@ export function CbtEditor() {
       maxViolations: Math.round(draft.maxViolations),
       questions: draft.questions.map((question) => ({
         ...question,
+        sectionStimulus: (question.sectionStimulus ?? '').trim() || undefined,
         stimulus: (question.stimulus ?? '').trim() || undefined,
         text: question.text.trim(),
         options: question.options.map((option) => option.trim()),
@@ -557,6 +559,16 @@ export function CbtEditor() {
                       error ? 'border-rose-300' : 'border-slate-200',
                     )}
                   >
+                    {/* Instruksi bagian/grup (di atas nomor soal) */}
+                    <div className="border-b border-amber-100 bg-amber-50/40 px-4 py-2.5">
+                      <Label>Instruksi Bagian (opsional, tampil di atas nomor soal)</Label>
+                      <RichTextEditor
+                        value={question.sectionStimulus ?? ''}
+                        onChange={(val) => updateQuestion(question.id, { sectionStimulus: val })}
+                        placeholder="cth. Bacalah teks di bawah ini untuk mengisi soal nomor 1-6!"
+                        minHeight="40px"
+                      />
+                    </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-navy-900 text-xs font-bold text-white">
@@ -854,7 +866,7 @@ export function CbtEditor() {
                 Format yang didukung:
               </p>
               <ul className="mt-2 space-y-1 text-[11px] text-slate-400">
-                <li><strong>Excel (.xlsx/.csv):</strong> kolom Pertanyaan, Opsi A-D, Jawaban (A-D), Poin, Tipe</li>
+                <li><strong>Excel (.xlsx/.csv):</strong> kolom Instruksi Bagian, Stimulus, Pertanyaan, Opsi A-D, Jawaban (A-D), Poin, Tipe</li>
                 <li><strong>Word (.docx):</strong> soal bernomor (1., 2., ...) dengan opsi A/B/C/D</li>
                 <li><strong>PDF:</strong> teks soal bernomor dengan opsi A/B/C/D</li>
               </ul>

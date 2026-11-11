@@ -603,6 +603,12 @@ export function Ujian() {
           <main className="flex-1">
             {q ? (
               <Card className="p-5">
+                {q.sectionStimulus && (
+                  <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3">
+                    <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-sky-700">Instruksi Bagian</p>
+                    <RichContent content={q.sectionStimulus} className="text-sm leading-relaxed text-slate-700" />
+                  </div>
+                )}
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-900 text-sm font-bold text-white">

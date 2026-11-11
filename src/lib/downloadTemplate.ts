@@ -18,13 +18,13 @@ function downloadBlob(blob: Blob, filename: string): void {
  * Format kolom: No | Tipe | Stimulus | Pertanyaan | Opsi A | Opsi B | Opsi C | Opsi D | Jawaban | Poin
  */
 export async function downloadExcelTemplate(): Promise<void> {
-  const header = ['No', 'Tipe', 'Stimulus', 'Pertanyaan', 'Opsi A', 'Opsi B', 'Opsi C', 'Opsi D', 'Jawaban', 'Poin']
+  const header = ['No', 'Tipe', 'Instruksi Bagian', 'Stimulus', 'Pertanyaan', 'Opsi A', 'Opsi B', 'Opsi C', 'Opsi D', 'Jawaban', 'Poin']
   const rows: (string | number)[][] = [
     header,
-    [1, 'pg', '', 'Hasil dari -12 + 8 adalah...', '-4', '4', '-20', '20', 'B', 5],
-    [2, 'pg', 'Bacalah teks berikut dengan saksama!', 'Tema paragraf di atas adalah...', 'Pendidikan', 'Lingkungan', 'Teknologi', 'Kesehatan', 'A', 5],
-    [3, 'essay', 'Perhatikan gambar berikut!', 'Jelaskan proses terjadinya hujan dengan bahasa Anda sendiri.', '', '', '', '', '', 10],
-    [4, 'pg', '', 'Ibukota Indonesia adalah...', 'Jakarta', 'Bandung', 'Surabaya', 'Medan', 'A', 3],
+    [1, 'pg', 'Bacalah teks berikut untuk soal nomor 1-2!', '', 'Hasil dari -12 + 8 adalah...', '-4', '4', '-20', '20', 'B', 5],
+    [2, 'pg', '', '', 'Tema paragraf di atas adalah...', 'Pendidikan', 'Lingkungan', 'Teknologi', 'Kesehatan', 'A', 5],
+    [3, 'essay', '', 'Perhatikan gambar berikut!', 'Jelaskan proses terjadinya hujan dengan bahasa Anda sendiri.', '', '', '', '', '', 10],
+    [4, 'pg', '', '', 'Ibukota Indonesia adalah...', 'Jakarta', 'Bandung', 'Surabaya', 'Medan', 'A', 3],
   ]
 
   const worksheet = XLSX.utils.aoa_to_sheet(rows)
@@ -32,6 +32,7 @@ export async function downloadExcelTemplate(): Promise<void> {
   worksheet['!cols'] = [
     { wch: 5 },   // No
     { wch: 8 },   // Tipe
+    { wch: 40 },  // Instruksi Bagian
     { wch: 35 },  // Stimulus
     { wch: 50 },  // Pertanyaan
     { wch: 20 },  // Opsi A
@@ -52,6 +53,7 @@ export async function downloadExcelTemplate(): Promise<void> {
     ['Kolom', 'Keterangan'],
     ['No', 'Nomor urut soal (opsional)'],
     ['Tipe', '"pg" untuk Pilihan Ganda, "essay" untuk Esai'],
+    ['Instruksi Bagian', 'Teks instruksi yang tampil di atas nomor soal (opsional). Contoh: "Bacalah teks berikut untuk soal 1-6!"'],
     ['Stimulus', 'Instruksi/bacaan sebelum soal (opsional). Contoh: "Bacalah teks berikut!"'],
     ['Pertanyaan', 'Teks soal. Boleh berisi HTML (gambar, tebal, miring, kode).'],
     ['Opsi A-D', 'Pilihan jawaban untuk PG. Kosongkan untuk esai.'],

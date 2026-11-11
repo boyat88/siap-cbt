@@ -61,6 +61,7 @@ export async function importFromExcel(file: File): Promise<CbtQuestion[]> {
       return ''
     }
 
+    const sectionStimulus = get('sectionstimulus', 'instruksibagian', 'stimulusbagian', 'section', 'grup', 'group')
     const stimulus = get('stimulus', 'instruksi', 'bacaan', 'teks', 'passage', 'instruction')
     const text = get('pertanyaan', 'soal', 'question', 'text', 'q')
     if (!text) continue
@@ -86,7 +87,7 @@ export async function importFromExcel(file: File): Promise<CbtQuestion[]> {
 
     const points = Number(get('poin', 'point', 'points', 'nilai', 'score')) || (type === 'pg' ? 1 : 10)
 
-    questions.push({ id: uid(), type, stimulus: stimulus || undefined, text, options, answer, points })
+    questions.push({ id: uid(), type, sectionStimulus: sectionStimulus || undefined, stimulus: stimulus || undefined, text, options, answer, points })
   }
 
   if (questions.length === 0) throw new Error('Tidak ada soal yang dapat dibaca. Pastikan header kolom sesuai format (Pertanyaan, Opsi A-D, Jawaban, Poin).')
