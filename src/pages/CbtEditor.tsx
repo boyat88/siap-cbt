@@ -69,6 +69,40 @@ export function CbtEditor() {
   const [draft, setDraft] = useState<CbtExam | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const subjectAbbr: Record<string, string> = {
+    'Matematika': 'MTK', 'Bahasa Indonesia': 'BIN', 'Bahasa Inggris': 'BIG',
+    'Ilmu Pengetahuan Alam': 'IPA', 'Ilmu Pengetahuan Sosial': 'IPS',
+    'Pendidikan Pancasila': 'PKN', 'Pendidikan Agama Islam': 'PAI',
+    'Seni Budaya': 'SBD', 'PJOK': 'PJK', 'Informatika': 'INF', 'Prakarya': 'PRK',
+  }
+
+  const regenerateToken = () => {
+    const abbr = subjectAbbr[draft?.subject ?? ''] ?? (draft?.subject ?? 'XXX').slice(0, 3).toUpperCase()
+    const classPart = (draft?.classIds ?? []).length > 0
+      ? (draft?.classIds ?? []).map((id) => id.replace('k', '')).join('')
+      : 'X'
+    const random = generateToken(4)
+    let token = `${abbr}${classPart}-${random}`
+    // Pastikan token unik antar ujian.
+    let guard = 0
+    while (cbt.exams.some((exam) => exam.token === token) && guard < 20) {
+      token = `${abbr}${classPart}-${generateToken(4)}`
+      guard += 1
+    }
+    update('token', token)
+    toast('Token baru berhasil dibuat.', 'success')
+  }
+
+  // Auto-regenerate token ketika mata pelajaran atau kelas berubah.
+  useEffect(() => {
+    if (!draft) return
+    const abbr = subjectAbbr[draft.subject] ?? draft.subject.slice(0, 3).toUpperCase()
+    if (!draft.token.startsWith(abbr)) {
+      regenerateToken()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.subject, draft?.classIds?.join(',')])
+
   // State untuk impor soal dari file (Word/Excel/PDF).
   const [importOpen, setImportOpen] = useState(false)
   const [importLoading, setImportLoading] = useState(false)
@@ -194,17 +228,7 @@ export function CbtEditor() {
     setErrors((prev) => ({ ...prev, classIds: '' }))
   }
 
-  const regenerateToken = () => {
-    let token = generateToken()
-    // Pastikan token unik antar ujian.
-    let guard = 0
-    while (cbt.exams.some((exam) => exam.token === token) && guard < 20) {
-      token = generateToken()
-      guard += 1
-    }
-    update('token', token)
-    toast('Token baru berhasil dibuat.', 'success')
-  }
+  // regenerateToken sudah didefinisikan di atas.
 
   const validate = (): boolean => {
     const next: Record<string, string> = {}
@@ -584,12 +608,7 @@ export function CbtEditor() {
                           minHeight="100px"
                         />
                       </div>
-                      {question.text && /<[a-z]/i.test(question.text) && (
-                        <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
-                          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Preview (hasil render):</p>
-                          <RichContent content={question.text} className="text-sm text-slate-700" />
-                        </div>
-                      )}
+
 
                       {question.type === 'pg' && (
                         <div>
