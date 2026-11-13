@@ -71,6 +71,7 @@ export function Cbt() {
   const [cardIncludePhoto, setCardIncludePhoto] = useState(true)
   const [cardBgColor, setCardBgColor] = useState('#f0f9ff')
   const [cardBgImage, setCardBgImage] = useState<string | null>(null)
+  const [cardExamRoom, setCardExamRoom] = useState('')
   const [cardPrintMode, setCardPrintMode] = useState<'all' | 'class' | 'student'>('all')
   const [cardSelectedClasses, setCardSelectedClasses] = useState<string[]>([])
   const [cardSelectedStudents, setCardSelectedStudents] = useState<string[]>([])
@@ -141,6 +142,7 @@ export function Cbt() {
         academicYear: data.settings.academicYear,
         semester: data.settings.semester,
         printLocation: 'Cikatomas',
+        examRoom: cardExamRoom || undefined,
         headmasterSignature: data.settings.school.headmasterSignature,
         headmasterName: data.settings.school.headmaster,
         headmasterNip: data.settings.school.headmasterNip,
@@ -593,6 +595,12 @@ export function Cbt() {
             value={cardExamTime}
             onChange={(e) => setCardExamTime(e.target.value)}
             required
+          />
+          <Input
+            label="Ruang Ujian (opsional)"
+            placeholder="cth. Ruang 1 / Lab Komputer"
+            value={cardExamRoom}
+            onChange={(e) => setCardExamRoom(e.target.value)}
           />
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5">
             <input

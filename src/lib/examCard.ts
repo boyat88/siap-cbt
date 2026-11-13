@@ -18,6 +18,7 @@ export interface ExamCardInfo {
   cardBgColor?: string
   cardBgImage?: string
   printLocation?: string
+  examRoom?: string
 }
 
 async function fetchImageDataUrl(src: string): Promise<string | null> {
@@ -106,10 +107,10 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
         const student = pageStudents[idx]
         if (student) {
           const details = [
-            { label: 'Mapel', value: exam.subject },
-            { label: 'Hari/Tgl', value: formatDateLong(examDate) },
-            { label: 'Waktu', value: examTime },
-            { label: 'Kelas', value: student.classId.replace('k', '') },
+            { label: 'Nama', value: student.name },
+            { label: 'NIS/NISN', value: student.nisn },
+            { label: 'No. Peserta', value: String(students.indexOf(student) + 1) },
+            { label: 'Ruang Ujian', value: info.examRoom || '-' },
           ]
 
           html += `<td class="card">
@@ -283,10 +284,10 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       let detailY = nameY + 10
       pdf.setFontSize(6.5)
       const details = [
-        { label: 'Mapel', value: exam.subject },
-        { label: 'Hari/Tgl', value: formatDateLong(examDate) },
-        { label: 'Waktu', value: examTime },
-        { label: 'Kelas', value: student.classId.replace('k', '') },
+        { label: 'Nama', value: student.name },
+        { label: 'NIS/NISN', value: student.nisn },
+        { label: 'No. Peserta', value: String(students.indexOf(student) + 1) },
+        { label: 'Ruang Ujian', value: info.examRoom || '-' },
       ]
       for (const d of details) {
         pdf.setFont('helvetica', 'bold')
