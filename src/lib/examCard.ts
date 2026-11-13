@@ -19,6 +19,8 @@ export interface ExamCardInfo {
   cardBgImage?: string
   printLocation?: string
   examRoom?: string
+  /** Nomor peserta per siswa (studentId -> nomor). Opsional, auto-generate jika kosong. */
+  participantNumbers?: Record<string, string>
 }
 
 async function fetchImageDataUrl(src: string): Promise<string | null> {
@@ -109,7 +111,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
           const details = [
             { label: 'Nama', value: student.name },
             { label: 'NIS/NISN', value: student.nisn },
-            { label: 'No. Peserta', value: String(students.indexOf(student) + 1) },
+            { label: 'No. Peserta', value: info.participantNumbers?.[student.id] || String(students.indexOf(student) + 1) },
             { label: 'Ruang Ujian', value: info.examRoom || '-' },
           ]
 
@@ -286,7 +288,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       const details = [
         { label: 'Nama', value: student.name },
         { label: 'NIS/NISN', value: student.nisn },
-        { label: 'No. Peserta', value: String(students.indexOf(student) + 1) },
+        { label: 'No. Peserta', value: info.participantNumbers?.[student.id] || String(students.indexOf(student) + 1) },
         { label: 'Ruang Ujian', value: info.examRoom || '-' },
       ]
       for (const d of details) {

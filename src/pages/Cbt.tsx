@@ -72,6 +72,7 @@ export function Cbt() {
   const [cardBgColor, setCardBgColor] = useState('#f0f9ff')
   const [cardBgImage, setCardBgImage] = useState<string | null>(null)
   const [cardExamRoom, setCardExamRoom] = useState('')
+  const [cardParticipantNumbers, setCardParticipantNumbers] = useState<Record<string, string>>({})
   const [cardPrintMode, setCardPrintMode] = useState<'all' | 'class' | 'student'>('all')
   const [cardSelectedClasses, setCardSelectedClasses] = useState<string[]>([])
   const [cardSelectedStudents, setCardSelectedStudents] = useState<string[]>([])
@@ -143,6 +144,7 @@ export function Cbt() {
         semester: data.settings.semester,
         printLocation: 'Cikatomas',
         examRoom: cardExamRoom || undefined,
+        participantNumbers: cardParticipantNumbers,
         headmasterSignature: data.settings.school.headmasterSignature,
         headmasterName: data.settings.school.headmaster,
         headmasterNip: data.settings.school.headmasterNip,
@@ -213,7 +215,7 @@ export function Cbt() {
               <RotateCcw size={15} />
               Muat Ulang
             </Button>
-            <Button variant="outline" size="md" onClick={() => { setCardExamId(cbt.exams[0]?.id ?? ''); setCardModalOpen(true) }}>
+            <Button variant="outline" size="md" onClick={() => { setCardExamId(cbt.exams[0]?.id ?? ''); setCardParticipantNumbers({}); setCardModalOpen(true) }}>
               <CreditCard size={15} />
               Kartu Ujian
             </Button>
@@ -602,6 +604,41 @@ export function Cbt() {
             value={cardExamRoom}
             onChange={(e) => setCardExamRoom(e.target.value)}
           />
+          {cardExamId && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">No. Peserta (opsional, per siswa)</label>
+              <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2">
+                {data.students
+                  .filter((s) => {
+                    const exam = cbt.exams.find((e) => e.id === cardExamId)
+                    if (!exam) return false
+                    if (s.status !== 'aktif') return false
+                    if (cardPrintMode === 'class' && cardSelectedClasses.length > 0) return cardSelectedClasses.includes(s.classId)
+                    if (cardPrintMode === 'student' && cardSelectedStudents.length > 0) return cardSelectedStudents.includes(s.id)
+                    return exam.classIds.includes(s.classId)
+                  })
+                  .sort((a, b) => a.name.localeCompare(b.name, 'id'))
+                  .map((s, idx) => (
+                    <div key={s.id} className="flex items-center gap-2 rounded-lg px-2 py-1">
+                      <span className="flex-1 text-xs text-slate-700 truncate">{s.name}</span>
+                      <input
+                        type="text"
+                        placeholder={`${idx + 1}`}
+                        value={cardParticipantNumbers[s.id] ?? ''}
+                        onChange={(e) => {
+                          setCardParticipantNumbers((prev) => ({
+                            ...prev,
+                            [s.id]: e.target.value,
+                          }))
+                        }}
+                        className="h-7 w-20 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      />
+                    </div>
+                  ))}
+              </div>
+              <p className="text-[10px] text-slate-400">Kosongkan untuk auto-generate (1, 2, 3, ...).</p>
+            </div>
+          )}
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5">
             <input
               type="checkbox"
