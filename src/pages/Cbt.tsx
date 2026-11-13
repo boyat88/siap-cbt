@@ -114,11 +114,16 @@ export function Cbt() {
       toast('Pilih ujian terlebih dahulu.', 'error')
       return
     }
-    let students = data.students.filter((s) => exam.classIds.includes(s.classId) && s.status === 'aktif')
+    // Tampilkan semua siswa aktif (tidak dibatasi exam.classIds) agar kelas 7,8,9 tersedia.
+    let students = data.students.filter((s) => s.status === 'aktif')
     if (cardPrintMode === 'class' && cardSelectedClasses.length > 0) {
       students = students.filter((s) => cardSelectedClasses.includes(s.classId))
     } else if (cardPrintMode === 'student' && cardSelectedStudents.length > 0) {
       students = students.filter((s) => cardSelectedStudents.includes(s.id))
+    } else if (cardPrintMode === 'all') {
+      // Semua kelas: tidak filter tambahan.
+    } else {
+      // Default: semua siswa aktif.
     }
     if (students.length === 0) {
       toast('Tidak ada siswa yang dipilih.', 'error')
@@ -476,8 +481,8 @@ export function Cbt() {
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-700">Pilih Kelas</label>
               <div className="flex flex-wrap gap-2">
-                {cbt.exams.find((e) => e.id === cardExamId)?.classIds.map((cid) => {
-                  const clazz = data.classes.find((c) => c.id === cid)
+                {[...data.classes].sort((a, b) => a.grade - b.grade).map((clazz) => {
+                  const cid = clazz.id
                   const selected = cardSelectedClasses.includes(cid)
                   return (
                     <button
@@ -495,11 +500,21 @@ export function Cbt() {
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
                       )}
                     >
-                      Kelas {clazz?.name ?? cid}
+                      Kelas {clazz.name}
                     </button>
                   )
                 })}
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const allClassIds = data.classes.map((c) => c.id)
+                  setCardSelectedClasses(allClassIds)
+                }}
+                className="text-xs font-medium text-brand-600 hover:text-brand-700"
+              >
+                Pilih semua kelas
+              </button>
             </div>
           )}
           {cardPrintMode === 'student' && cardExamId && (
@@ -507,10 +522,7 @@ export function Cbt() {
               <label className="block text-xs font-semibold text-slate-700">Pilih Siswa</label>
               <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2">
                 {data.students
-                  .filter((s) => {
-                    const exam = cbt.exams.find((e) => e.id === cardExamId)
-                    return exam?.classIds.includes(s.classId) && s.status === 'aktif'
-                  })
+                  .filter((s) => s.status === 'aktif')
                   .sort((a, b) => a.name.localeCompare(b.name, 'id'))
                   .map((s) => {
                     const selected = cardSelectedStudents.includes(s.id)
@@ -545,7 +557,7 @@ export function Cbt() {
                   const exam = cbt.exams.find((e) => e.id === cardExamId)
                   if (!exam) return
                   const allIds = data.students
-                    .filter((s) => exam.classIds.includes(s.classId) && s.status === 'aktif')
+                    .filter((s) => s.status === 'aktif')
                     .map((s) => s.id)
                   setCardSelectedStudents(allIds)
                 }}
@@ -640,8 +652,7 @@ export function Cbt() {
           {cardExamId && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
               <p><strong>{data.students.filter((s) => {
-                const exam = cbt.exams.find((e) => e.id === cardExamId)
-                if (!exam?.classIds.includes(s.classId) || s.status !== 'aktif') return false
+                if (s.status !== 'aktif') return false
                 if (cardPrintMode === 'class' && cardSelectedClasses.length > 0) return cardSelectedClasses.includes(s.classId)
                 if (cardPrintMode === 'student' && cardSelectedStudents.length > 0) return cardSelectedStudents.includes(s.id)
                 return true
