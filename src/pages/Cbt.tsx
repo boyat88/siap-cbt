@@ -71,6 +71,9 @@ export function Cbt() {
   const [cardIncludePhoto, setCardIncludePhoto] = useState(true)
   const [cardBgColor, setCardBgColor] = useState('#f0f9ff')
   const [cardBgImage, setCardBgImage] = useState<string | null>(null)
+  const [cardPrintMode, setCardPrintMode] = useState<'all' | 'class' | 'student'>('all')
+  const [cardSelectedClasses, setCardSelectedClasses] = useState<string[]>([])
+  const [cardSelectedStudents, setCardSelectedStudents] = useState<string[]>([])
   const [cardGenerating, setCardGenerating] = useState(false)
 
   const classMap = useMemo(() => new Map(data.classes.map((clazz) => [clazz.id, clazz])), [data.classes])
@@ -111,9 +114,14 @@ export function Cbt() {
       toast('Pilih ujian terlebih dahulu.', 'error')
       return
     }
-    const students = data.students.filter((s) => exam.classIds.includes(s.classId) && s.status === 'aktif')
+    let students = data.students.filter((s) => exam.classIds.includes(s.classId) && s.status === 'aktif')
+    if (cardPrintMode === 'class' && cardSelectedClasses.length > 0) {
+      students = students.filter((s) => cardSelectedClasses.includes(s.classId))
+    } else if (cardPrintMode === 'student' && cardSelectedStudents.length > 0) {
+      students = students.filter((s) => cardSelectedStudents.includes(s.id))
+    }
     if (students.length === 0) {
-      toast('Tidak ada siswa aktif di kelas ujian ini.', 'error')
+      toast('Tidak ada siswa yang dipilih.', 'error')
       return
     }
     setCardGenerating(true)
@@ -126,6 +134,7 @@ export function Cbt() {
         examType: cardExamType,
         schoolName: data.settings.school.name,
         academicYear: data.settings.academicYear,
+        semester: data.settings.semester,
         headmasterSignature: data.settings.school.headmasterSignature,
         headmasterName: data.settings.school.headmaster,
         headmasterNip: data.settings.school.headmasterNip,
@@ -454,6 +463,99 @@ export function Cbt() {
             onChange={(e) => setCardExamId(e.target.value)}
           />
           <Select
+            label="Mode Cetak"
+            options={[
+              { value: 'all', label: 'Semua kelas (semua siswa)' },
+              { value: 'class', label: 'Per kelas (pilih kelas)' },
+              { value: 'student', label: 'Per siswa (pilih siswa)' },
+            ]}
+            value={cardPrintMode}
+            onChange={(e) => setCardPrintMode(e.target.value as 'all' | 'class' | 'student')}
+          />
+          {cardPrintMode === 'class' && cardExamId && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">Pilih Kelas</label>
+              <div className="flex flex-wrap gap-2">
+                {cbt.exams.find((e) => e.id === cardExamId)?.classIds.map((cid) => {
+                  const clazz = data.classes.find((c) => c.id === cid)
+                  const selected = cardSelectedClasses.includes(cid)
+                  return (
+                    <button
+                      key={cid}
+                      type="button"
+                      onClick={() => {
+                        setCardSelectedClasses((prev) =>
+                          selected ? prev.filter((id) => id !== cid) : [...prev, cid],
+                        )
+                      }}
+                      className={cn(
+                        'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                        selected
+                          ? 'border-brand-400 bg-brand-50 text-brand-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                      )}
+                    >
+                      Kelas {clazz?.name ?? cid}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          {cardPrintMode === 'student' && cardExamId && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700">Pilih Siswa</label>
+              <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-2">
+                {data.students
+                  .filter((s) => {
+                    const exam = cbt.exams.find((e) => e.id === cardExamId)
+                    return exam?.classIds.includes(s.classId) && s.status === 'aktif'
+                  })
+                  .sort((a, b) => a.name.localeCompare(b.name, 'id'))
+                  .map((s) => {
+                    const selected = cardSelectedStudents.includes(s.id)
+                    const clazz = data.classes.find((c) => c.id === s.classId)
+                    return (
+                      <label
+                        key={s.id}
+                        className={cn(
+                          'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors',
+                          selected ? 'bg-brand-50' : 'hover:bg-slate-100',
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => {
+                            setCardSelectedStudents((prev) =>
+                              selected ? prev.filter((id) => id !== s.id) : [...prev, s.id],
+                            )
+                          }}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+                        />
+                        <span className="font-medium text-slate-700">{s.name}</span>
+                        <span className="text-slate-400">(Kelas {clazz?.name})</span>
+                      </label>
+                    )
+                  })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const exam = cbt.exams.find((e) => e.id === cardExamId)
+                  if (!exam) return
+                  const allIds = data.students
+                    .filter((s) => exam.classIds.includes(s.classId) && s.status === 'aktif')
+                    .map((s) => s.id)
+                  setCardSelectedStudents(allIds)
+                }}
+                className="text-xs font-medium text-brand-600 hover:text-brand-700"
+              >
+                Pilih semua
+              </button>
+            </div>
+          )}
+          <Select
             label="Jenis Ujian"
             options={[
               { value: 'SAS', label: 'SAS (Sumatif Akhir Semester)' },
@@ -537,7 +639,13 @@ export function Cbt() {
           </div>
           {cardExamId && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
-              <p><strong>{data.students.filter((s) => cbt.exams.find((e) => e.id === cardExamId)?.classIds.includes(s.classId) && s.status === 'aktif').length}</strong> peserta akan dicetak (4 siswa per lembar A4).</p>
+              <p><strong>{data.students.filter((s) => {
+                const exam = cbt.exams.find((e) => e.id === cardExamId)
+                if (!exam?.classIds.includes(s.classId) || s.status !== 'aktif') return false
+                if (cardPrintMode === 'class' && cardSelectedClasses.length > 0) return cardSelectedClasses.includes(s.classId)
+                if (cardPrintMode === 'student' && cardSelectedStudents.length > 0) return cardSelectedStudents.includes(s.id)
+                return true
+              }).length}</strong> peserta akan dicetak (6 siswa per lembar A4).</p>
             </div>
           )}
         </div>

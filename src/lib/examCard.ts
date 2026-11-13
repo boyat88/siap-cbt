@@ -10,6 +10,7 @@ export interface ExamCardInfo {
   examType: string
   schoolName: string
   academicYear: string
+  semester?: string
   headmasterSignature?: string
   headmasterName?: string
   headmasterNip?: string
@@ -52,10 +53,11 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
+  const semesterLine = info.semester ? `Semester ${info.semester}` : ''
   const bgColor = cardBgColor || '#f0f9ff'
 
   const cardsPerPage = 6
@@ -155,6 +157,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
     <div class="title">${title}</div>
     <div class="school">${subtitle}</div>
     <div class="year">${yearLine}</div>
+    ${semesterLine ? `<div class="year">${semesterLine}</div>` : ''}
   </div>
   <table cellpadding="0" cellspacing="0" style="width:100%; margin-top:4px;">
     <tr>
@@ -193,10 +196,11 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
+  const semesterLine = info.semester ? `Semester ${info.semester}` : ''
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
@@ -261,7 +265,14 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.setFontSize(5.5)
       pdf.setFont('helvetica', 'italic')
       pdf.text(yearLine, x + cardW / 2, cursorY + 2, { align: 'center' })
-      cursorY += 6
+      cursorY += 3
+      if (semesterLine) {
+        pdf.setFontSize(5.5)
+        pdf.setFont('helvetica', 'italic')
+        pdf.text(semesterLine, x + cardW / 2, cursorY + 2, { align: 'center' })
+        cursorY += 3
+      }
+      cursorY += 3
 
       const includePhotoVal = includePhoto !== false
       const photoSize = includePhotoVal ? 22 : 0
