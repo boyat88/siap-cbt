@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ShadingType } from 'docx'
+import { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from 'docx'
 import { jsPDF } from 'jspdf'
 import type { CbtExam } from '../types'
 import type { Student } from '../types'
@@ -123,19 +123,16 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: title, bold: true, size: 9, color: '1E40AF' })],
               spacing: { after: 0 },
-              shading: { type: ShadingType.SOLID, color: 'auto', fill: 'DBEAFE' },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: subtitle, bold: true, size: 8 })],
               spacing: { after: 0 },
-              shading: { type: ShadingType.SOLID, color: 'auto', fill: 'DBEAFE' },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: yearLine, size: 7, italics: true })],
               spacing: { after: 0 },
-              shading: { type: ShadingType.SOLID, color: 'auto', fill: 'DBEAFE' },
             }),
           )
           if (semesterLine) {
@@ -144,16 +141,14 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
                 alignment: AlignmentType.CENTER,
                 children: [new TextRun({ text: semesterLine, size: 7, italics: true })],
                 spacing: { after: 60 },
-                shading: { type: ShadingType.SOLID, color: 'auto', fill: 'DBEAFE' },
               }),
             )
           } else {
-            cellChildren.push(new Paragraph({ text: '', spacing: { after: 60 }, shading: { type: ShadingType.SOLID, color: 'auto', fill: 'DBEAFE' } }))
+            cellChildren.push(new Paragraph({ text: '', spacing: { after: 60 } }))
           }
 
-          // Foto + Detail (nested table)
-          const detailChildren: Paragraph[] = []
-          detailChildren.push(
+          // Nama siswa
+          cellChildren.push(
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: student.name, bold: true, size: 9 })],
@@ -165,6 +160,8 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               spacing: { after: 40 },
             }),
           )
+
+          // Detail ujian
           const details = [
             { label: 'Mapel', value: exam.subject },
             { label: 'Hari/Tgl', value: formatDateLong(examDate) },
@@ -172,7 +169,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             { label: 'Kelas', value: student.classId.replace('k', '') },
           ]
           for (const d of details) {
-            detailChildren.push(
+            cellChildren.push(
               new Paragraph({
                 children: [
                   new TextRun({ text: `${d.label}:`.padEnd(10, ' '), bold: true, size: 7, font: 'Consolas' }),
@@ -182,45 +179,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               }),
             )
           }
-
-          const nestedCells: TableCell[] = []
-          if (includePhoto !== false) {
-            const photoChildren: Paragraph[] = []
-            if (photoBuffer) {
-              photoChildren.push(
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [new ImageRun({ data: photoBuffer, transformation: { width: 40, height: 50 } })],
-                }),
-              )
-            } else {
-              photoChildren.push(
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [new TextRun({ text: '[Foto]', size: 7, italics: true, color: '999999' })],
-                }),
-              )
-            }
-            nestedCells.push(
-              new TableCell({
-                children: photoChildren,
-                width: { size: 25, type: WidthType.PERCENTAGE },
-              }),
-            )
-          }
-          nestedCells.push(
-            new TableCell({
-              children: detailChildren,
-              width: { size: includePhoto !== false ? 75 : 100, type: WidthType.PERCENTAGE },
-            }),
-          )
-
-          cellChildren.push(
-            new Table({
-              rows: [new TableRow({ children: nestedCells })],
-              width: { size: 100, type: WidthType.PERCENTAGE },
-            }),
-          )
 
           // Titimangsa + Tanda tangan
           cellChildren.push(
@@ -257,10 +215,10 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               children: cellChildren,
               width: { size: 50, type: WidthType.PERCENTAGE },
               borders: {
-                top: { style: BorderStyle.DASHED, size: 6, color: '3b82f6' },
-                bottom: { style: BorderStyle.DASHED, size: 6, color: '3b82f6' },
-                left: { style: BorderStyle.DASHED, size: 6, color: '3b82f6' },
-                right: { style: BorderStyle.DASHED, size: 6, color: '3b82f6' },
+                top: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                bottom: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                left: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                right: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
               },
             }),
           )
