@@ -68,6 +68,7 @@ export function Cbt() {
   const [cardExamType, setCardExamType] = useState('SAS')
   const [cardExamDate, setCardExamDate] = useState(new Date().toISOString().slice(0, 10))
   const [cardExamTime, setCardExamTime] = useState('07:30 - 09:00')
+  const [cardIncludePhoto, setCardIncludePhoto] = useState(true)
   const [cardGenerating, setCardGenerating] = useState(false)
 
   const classMap = useMemo(() => new Map(data.classes.map((clazz) => [clazz.id, clazz])), [data.classes])
@@ -123,6 +124,10 @@ export function Cbt() {
         examType: cardExamType,
         schoolName: data.settings.school.name,
         academicYear: data.settings.academicYear,
+        headmasterSignature: data.settings.school.headmasterSignature,
+        headmasterName: data.settings.school.headmaster,
+        headmasterNip: data.settings.school.headmasterNip,
+        includePhoto: cardIncludePhoto,
       }
       if (format === 'word') {
         await generateExamCardWord(info)
@@ -470,6 +475,18 @@ export function Cbt() {
             onChange={(e) => setCardExamTime(e.target.value)}
             required
           />
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5">
+            <input
+              type="checkbox"
+              id="includePhoto"
+              checked={cardIncludePhoto}
+              onChange={(e) => setCardIncludePhoto(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+            />
+            <label htmlFor="includePhoto" className="text-sm text-slate-700">
+              Sertakan foto siswa di kartu
+            </label>
+          </div>
           {cardExamId && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
               <p><strong>{data.students.filter((s) => cbt.exams.find((e) => e.id === cardExamId)?.classIds.includes(s.classId) && s.status === 'aktif').length}</strong> peserta akan dicetak (4 siswa per lembar A4).</p>
