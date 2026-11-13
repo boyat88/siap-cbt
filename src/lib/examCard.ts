@@ -78,11 +78,11 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
   .page { page-break-after: always; }
   .page:last-child { page-break-after: auto; }
-  table.grid { width: 100%; border-collapse: separate; border-spacing: 4mm 4mm; }
+  table.grid { width: 100%; border-collapse: separate; border-spacing: 6mm 6mm; }
   td.card {
     width: 50%;
-    border: 2px dashed #3b82f6;
-    padding: 6px;
+    border: 3px solid #1e40af;
+    padding: 8px;
     vertical-align: top;
     background-color: ${bgColor};
   }
@@ -211,8 +211,8 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
   const pageH = 297
-  const margin = 6
-  const gap = 3
+  const margin = 5
+  const gap = 5
   const cardW = (pageW - margin * 2 - gap) / 2
   const cardH = (pageH - margin * 2 - gap * 2 - 14) / 3
   const cardsPerPage = 6
@@ -248,9 +248,9 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2])
       pdf.rect(x, y, cardW, cardH, 'F')
 
-      pdf.setDrawColor(96, 165, 250)
-      pdf.setLineWidth(0.5)
-      pdf.setLineDashPattern([2, 2], 0)
+      pdf.setDrawColor(30, 64, 175)
+      pdf.setLineWidth(0.8)
+      pdf.setLineDashPattern([3, 2], 0)
       pdf.rect(x, y, cardW, cardH)
       pdf.setLineDashPattern([], 0)
 
