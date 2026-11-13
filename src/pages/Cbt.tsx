@@ -6,6 +6,8 @@ import {
   ChevronUp,
   ClipboardList,
   Copy,
+  CreditCard,
+  FileSpreadsheet,
   FileText,
   Pencil,
   Play,
@@ -22,9 +24,11 @@ import {
   Card,
   CardHeader,
   EmptyState,
+  Input,
   Modal,
   PageHeader,
   SearchInput,
+  Select,
   cn,
   useToast,
 } from '../components/ui'
@@ -32,6 +36,7 @@ import { useApp } from '../store/AppContext'
 import { useCbt } from '../store/CbtContext'
 import { SUBJECTS } from '../lib/constants'
 import { essayQuestions, examTotalPoints, pgQuestions } from '../lib/cbt'
+import { generateExamCardWord, generateExamCardPdf } from '../lib/examCard'
 import { relativeTime } from '../lib/utils'
 import type { CbtExam, CbtExamStatus } from '../types'
 
@@ -58,6 +63,12 @@ export function Cbt() {
   const [filter, setFilter] = useState<StatusFilter>('semua')
   const [search, setSearch] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<CbtExam | null>(null)
+  const [cardModalOpen, setCardModalOpen] = useState(false)
+  const [cardExamId, setCardExamId] = useState<string>('')
+  const [cardExamType, setCardExamType] = useState('SAS')
+  const [cardExamDate, setCardExamDate] = useState(new Date().toISOString().slice(0, 10))
+  const [cardExamTime, setCardExamTime] = useState('07:30 - 09:00')
+  const [cardGenerating, setCardGenerating] = useState(false)
 
   const classMap = useMemo(() => new Map(data.classes.map((clazz) => [clazz.id, clazz])), [data.classes])
 
@@ -88,6 +99,43 @@ export function Cbt() {
       toast(`Token ${token} berhasil disalin.`, 'success')
     } catch {
       toast('Gagal menyalin token. Salin manual dari layar.', 'error')
+    }
+  }
+
+  const handleGenerateCard = async (format: 'word' | 'pdf') => {
+    const exam = cbt.exams.find((e) => e.id === cardExamId)
+    if (!exam) {
+      toast('Pilih ujian terlebih dahulu.', 'error')
+      return
+    }
+    const students = data.students.filter((s) => exam.classIds.includes(s.classId) && s.status === 'aktif')
+    if (students.length === 0) {
+      toast('Tidak ada siswa aktif di kelas ujian ini.', 'error')
+      return
+    }
+    setCardGenerating(true)
+    try {
+      const info = {
+        exam,
+        students,
+        examDate: cardExamDate,
+        examTime: cardExamTime,
+        examType: cardExamType,
+        schoolName: data.settings.school.name,
+        academicYear: data.settings.academicYear,
+      }
+      if (format === 'word') {
+        await generateExamCardWord(info)
+      } else {
+        await generateExamCardPdf(info)
+      }
+      toast(`Kartu ujian berhasil diunduh (${format === 'word' ? 'Word' : 'PDF'}).`, 'success')
+      setCardModalOpen(false)
+    } catch (e) {
+      toast('Gagal membuat kartu ujian.', 'error')
+      console.error(e)
+    } finally {
+      setCardGenerating(false)
     }
   }
 
@@ -138,6 +186,10 @@ export function Cbt() {
             <Button variant="outline" size="md" onClick={() => void cbt.refreshNow()}>
               <RotateCcw size={15} />
               Muat Ulang
+            </Button>
+            <Button variant="outline" size="md" onClick={() => { setCardExamId(cbt.exams[0]?.id ?? ''); setCardModalOpen(true) }}>
+              <CreditCard size={15} />
+              Kartu Ujian
             </Button>
             <Button size="md" onClick={() => navigate('/cbt/baru')}>
               <Plus size={16} />
@@ -349,6 +401,81 @@ export function Cbt() {
           beserta seluruh data peserta dan jawaban siswa yang terhubung dengan ujian ini. Sebaiknya ekspor
           hasil ke Excel terlebih dahulu dari halaman Hasil jika data masih dibutuhkan.
         </p>
+      </Modal>
+
+      {/* Modal Kartu Ujian */}
+      <Modal
+        open={cardModalOpen}
+        onClose={() => setCardModalOpen(false)}
+        title="Cetak Kartu Ujian"
+        description="Buat kartu peserta ujian (4 siswa per lembar A4) dalam format Word atau PDF."
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" size="md" onClick={() => setCardModalOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="outline"
+              size="md"
+              loading={cardGenerating}
+              onClick={() => void handleGenerateCard('word')}
+              disabled={cardGenerating}
+            >
+              <FileText size={15} />
+              Word
+            </Button>
+            <Button
+              size="md"
+              loading={cardGenerating}
+              onClick={() => void handleGenerateCard('pdf')}
+              disabled={cardGenerating}
+            >
+              <FileSpreadsheet size={15} />
+              PDF
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Select
+            label="Pilih Ujian"
+            options={cbt.exams.map((e) => ({ value: e.id, label: `${e.title} (${e.subject})` }))}
+            value={cardExamId}
+            onChange={(e) => setCardExamId(e.target.value)}
+          />
+          <Select
+            label="Jenis Ujian"
+            options={[
+              { value: 'SAS', label: 'SAS (Sumatif Akhir Semester)' },
+              { value: 'UAS', label: 'UAS (Ujian Akhir Semester)' },
+              { value: 'UTS', label: 'UTS (Ujian Tengah Semester)' },
+              { value: 'UH', label: 'Ulangan Harian' },
+              { value: 'Try Out', label: 'Try Out' },
+            ]}
+            value={cardExamType}
+            onChange={(e) => setCardExamType(e.target.value)}
+          />
+          <Input
+            label="Tanggal Ujian"
+            type="date"
+            value={cardExamDate}
+            onChange={(e) => setCardExamDate(e.target.value)}
+            required
+          />
+          <Input
+            label="Waktu Ujian"
+            placeholder="cth. 07:30 - 09:00"
+            value={cardExamTime}
+            onChange={(e) => setCardExamTime(e.target.value)}
+            required
+          />
+          {cardExamId && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
+              <p><strong>{data.students.filter((s) => cbt.exams.find((e) => e.id === cardExamId)?.classIds.includes(s.classId) && s.status === 'aktif').length}</strong> peserta akan dicetak (4 siswa per lembar A4).</p>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   )

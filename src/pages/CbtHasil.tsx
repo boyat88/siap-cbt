@@ -6,10 +6,8 @@ import {
   Ban,
   CheckCircle2,
   ClipboardList,
-  CreditCard,
   Eye,
   FileSpreadsheet,
-  FileText,
   PenLine,
   RotateCcw,
   ShieldAlert,
@@ -28,7 +26,6 @@ import {
   Modal,
   PageHeader,
   ProgressRing,
-  Select,
   cn,
   useToast,
 } from '../components/ui'
@@ -36,7 +33,6 @@ import { RichContent } from '../components/RichContent'
 import { useApp } from '../store/AppContext'
 import { useCbt } from '../store/CbtContext'
 import { exportExcel } from '../lib/excel'
-import { generateExamCardWord, generateExamCardPdf } from '../lib/examCard'
 import {
   OPTION_LABELS,
   VIOLATION_META,
@@ -69,11 +65,6 @@ export function CbtHasil() {
   const [gradingTarget, setGradingTarget] = useState<CbtAttempt | null>(null)
   const [essayDraft, setEssayDraft] = useState<Record<string, string>>({})
   const [detailTarget, setDetailTarget] = useState<CbtAttempt | null>(null)
-  const [cardModalOpen, setCardModalOpen] = useState(false)
-  const [cardExamType, setCardExamType] = useState('SAS')
-  const [cardExamDate, setCardExamDate] = useState(new Date().toISOString().slice(0, 10))
-  const [cardExamTime, setCardExamTime] = useState('07:30 - 09:00')
-  const [cardGenerating, setCardGenerating] = useState(false)
 
   const exam = useMemo(
     () => (examId ? cbt.exams.find((item) => item.id === examId) ?? null : null),
@@ -148,45 +139,6 @@ export function CbtHasil() {
     cbt.upsertAttempt(next, true)
     toast(`Nilai esai ${gradingTarget.studentName} berhasil disimpan.`, 'success')
     setGradingTarget(null)
-  }
-
-  const handleGenerateCard = async (format: 'word' | 'pdf') => {
-    setCardGenerating(true)
-    try {
-      const students = attempts.map((a) => ({
-        id: a.studentId,
-        nisn: a.studentId.replace(/^s_/, ''),
-        name: a.studentName,
-        gender: 'L' as const,
-        classId: a.classId,
-        birthDate: '',
-        guardian: '',
-        phone: '',
-        address: '',
-        status: 'aktif' as const,
-      }))
-      const info = {
-        exam,
-        students,
-        examDate: cardExamDate,
-        examTime: cardExamTime,
-        examType: cardExamType,
-        schoolName: data.settings.school.name,
-        academicYear: data.settings.academicYear,
-      }
-      if (format === 'word') {
-        await generateExamCardWord(info)
-      } else {
-        await generateExamCardPdf(info)
-      }
-      toast(`Kartu ujian berhasil diunduh (${format === 'word' ? 'Word' : 'PDF'}).`, 'success')
-      setCardModalOpen(false)
-    } catch (e) {
-      toast('Gagal membuat kartu ujian.', 'error')
-      console.error(e)
-    } finally {
-      setCardGenerating(false)
-    }
   }
 
   const exportResults = async () => {
@@ -278,15 +230,7 @@ export function CbtHasil() {
               <FileSpreadsheet size={15} />
               Ekspor Excel
             </Button>
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => setCardModalOpen(true)}
-              disabled={attempts.length === 0}
-            >
-              <CreditCard size={15} />
-              Kartu Ujian
-            </Button>
+
           </>
         }
       />
@@ -700,73 +644,7 @@ export function CbtHasil() {
             })}
       </Modal>
 
-      {/* Modal Kartu Ujian */}
-      <Modal
-        open={cardModalOpen}
-        onClose={() => setCardModalOpen(false)}
-        title="Cetak Kartu Ujian"
-        description="Buat kartu peserta ujian (4 siswa per lembar A4) dalam format Word atau PDF."
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" size="md" onClick={() => setCardModalOpen(false)}>
-              Batal
-            </Button>
-            <Button
-              variant="outline"
-              size="md"
-              loading={cardGenerating}
-              onClick={() => void handleGenerateCard('word')}
-              disabled={cardGenerating}
-            >
-              <FileText size={15} />
-              Word
-            </Button>
-            <Button
-              size="md"
-              loading={cardGenerating}
-              onClick={() => void handleGenerateCard('pdf')}
-              disabled={cardGenerating}
-            >
-              <FileSpreadsheet size={15} />
-              PDF
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <Select
-            label="Jenis Ujian"
-            options={[
-              { value: 'SAS', label: 'SAS (Sumatif Akhir Semester)' },
-              { value: 'UAS', label: 'UAS (Ujian Akhir Semester)' },
-              { value: 'UTS', label: 'UTS (Ujian Tengah Semester)' },
-              { value: 'UH', label: 'Ulangan Harian' },
-              { value: 'Try Out', label: 'Try Out' },
-            ]}
-            value={cardExamType}
-            onChange={(e) => setCardExamType(e.target.value)}
-          />
-          <Input
-            label="Tanggal Ujian"
-            type="date"
-            value={cardExamDate}
-            onChange={(e) => setCardExamDate(e.target.value)}
-            required
-          />
-          <Input
-            label="Waktu Ujian"
-            placeholder="cth. 07:30 - 09:00"
-            value={cardExamTime}
-            onChange={(e) => setCardExamTime(e.target.value)}
-            required
-          />
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
-            <p><strong>{attempts.length}</strong> peserta akan dicetak (4 siswa per lembar A4).</p>
-            <p className="mt-1">Judul: <strong>KARTU UJIAN {cardExamType} {exam.subject} Tahun Ajaran {data.settings.academicYear} Kelas {exam.classIds.map((c) => c.replace('k', '')).join('/')}</strong></p>
-          </div>
-        </div>
-      </Modal>
+
     </div>
   )
 }
