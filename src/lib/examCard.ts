@@ -116,7 +116,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 
   for (let page = 0; page < totalPages; page++) {
     if (page > 0) {
-      children.push(new Paragraph({ children: [new TextRun({ text: '', break: 1 })], pageBreakBefore: true }))
+      children.push(new Paragraph({ children: [new TextRun({ break: 1 })], pageBreakBefore: true }))
     }
 
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
@@ -139,20 +139,16 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: title, bold: true, size: 9, color: '1e40af' })],
               spacing: { after: 0 },
-              shading: { type: ShadingType.CLEAR, fill: 'dbeafe' },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: subtitle, bold: true, size: 8 })],
               spacing: { after: 0 },
-              shading: { type: ShadingType.CLEAR, fill: 'dbeafe' },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: yearLine, size: 7, italics: true })],
               spacing: { after: 60 },
-              shading: { type: ShadingType.CLEAR, fill: 'dbeafe' },
-              border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '93c5fd' } },
             }),
           )
 
@@ -182,7 +178,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               new TableCell({
                 children: photoChildren,
                 width: { size: 25, type: WidthType.PERCENTAGE },
-                verticalAlign: 'center' as any,
               }),
             )
           }
@@ -222,7 +217,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             new TableCell({
               children: detailChildren,
               width: { size: includePhoto !== false ? 75 : 100, type: WidthType.PERCENTAGE },
-              verticalAlign: 'center' as any,
             }),
           )
 
@@ -247,7 +241,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: headmasterName ?? 'Kepala Sekolah', size: 7, bold: true })],
               spacing: { after: 0 },
-              border: { top: { style: BorderStyle.SINGLE, size: 2, color: '000000' } },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
@@ -261,12 +254,12 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               children: cellChildren,
               width: { size: 50, type: WidthType.PERCENTAGE },
               borders: {
-                top: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
-                bottom: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
-                left: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
-                right: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
+                top: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                bottom: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                left: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                right: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
               },
-              shading: cardBgColor ? { type: ShadingType.CLEAR, fill: cardBgColor.replace('#', '') } : undefined,
+              shading: cardBgColor ? { type: ShadingType.SOLID, color: 'auto', fill: cardBgColor.replace('#', '') } : undefined,
             }),
           )
         }
