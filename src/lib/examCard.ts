@@ -15,6 +15,10 @@ export interface ExamCardInfo {
   headmasterName?: string
   headmasterNip?: string
   includePhoto?: boolean
+  /** Warna background kartu (hex, mis. #f0f9ff). Default putih. */
+  cardBgColor?: string
+  /** Data URL gambar background (opsional). */
+  cardBgImage?: string
 }
 
 function dayName(isoDate: string): string {
@@ -63,12 +67,18 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
   }
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)]
+}
+
 /* ------------------------------------------------------------------ */
 /* Word (.docx) - 6 kartu per lembar (2 kolom x 3 baris)               */
+/* Layout: foto di kiri, detail di kanan                               */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, headmasterSignature, headmasterName, headmasterNip, includePhoto } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -85,7 +95,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
 
-    // Tabel 3 baris x 2 kolom.
     const rows: TableRow[] = []
     for (let r = 0; r < 3; r++) {
       const cells: TableCell[] = []
@@ -95,8 +104,9 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
         if (student) {
           const photoBuffer = (includePhoto !== false && student.photo) ? await fetchImageBuffer(student.photo) : null
           const sigBuffer = headmasterSignature ? await fetchImageBuffer(headmasterSignature) : null
+          const bgBuffer = cardBgImage ? await fetchImageBuffer(cardBgImage) : null
 
-          const cellChildren: Paragraph[] = []
+          const cellChildren: (Paragraph | Table)[] = []
 
           // Header kartu: judul + sekolah + tahun ajaran
           cellChildren.push(
@@ -121,51 +131,49 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             }),
           )
 
-          // Foto siswa (opsional)
+          // Baris: foto (kiri) + detail (kanan) dalam tabel nested
+          const detailRows: TableRow[] = []
+          const detailCells: TableCell[] = []
+
+          // Kolom foto
           if (includePhoto !== false) {
+            const photoChildren: Paragraph[] = []
             if (photoBuffer) {
-              cellChildren.push(
+              photoChildren.push(
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [
-                    new ImageRun({
-                      data: photoBuffer,
-                      transformation: { width: 45, height: 56 },
-                    }),
-                  ],
-                  spacing: { after: 40 },
+                  children: [new ImageRun({ data: photoBuffer, transformation: { width: 40, height: 50 } })],
                 }),
               )
             } else {
-              cellChildren.push(
+              photoChildren.push(
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
                   children: [new TextRun({ text: '[Foto]', size: 7, italics: true, color: '999999' })],
-                  spacing: { after: 40 },
                 }),
               )
             }
+            detailCells.push(
+              new TableCell({
+                children: photoChildren,
+                width: { size: 25, type: WidthType.PERCENTAGE },
+                verticalAlign: 'center' as any,
+              }),
+            )
           }
 
-          // Nama siswa
-          cellChildren.push(
+          // Kolom detail
+          const detailChildren: Paragraph[] = []
+          detailChildren.push(
             new Paragraph({
-              alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: student.name, bold: true, size: 9 })],
-              spacing: { after: 10 },
+              spacing: { after: 20 },
             }),
-          )
-
-          // NISN
-          cellChildren.push(
             new Paragraph({
-              alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: `NISN: ${student.nisn}`, size: 7 })],
               spacing: { after: 40 },
             }),
           )
-
-          // Detail ujian
           const details = [
             { label: 'Ujian', value: exam.title },
             { label: 'Mapel', value: exam.subject },
@@ -174,7 +182,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             { label: 'Kelas', value: student.classId.replace('k', '') },
           ]
           for (const d of details) {
-            cellChildren.push(
+            detailChildren.push(
               new Paragraph({
                 children: [
                   new TextRun({ text: `${d.label}: `, bold: true, size: 7 }),
@@ -185,20 +193,36 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             )
           }
 
+          detailCells.push(
+            new TableCell({
+              children: detailChildren,
+              width: { size: includePhoto !== false ? 75 : 100, type: WidthType.PERCENTAGE },
+              verticalAlign: 'center' as any,
+            }),
+          )
+
+          cellChildren.push(
+            new Table({
+              rows: [new TableRow({ children: detailCells })],
+              width: { size: 100, type: WidthType.PERCENTAGE },
+            }),
+          )
+
           // Area tanda tangan kepala sekolah
           cellChildren.push(
-            new Paragraph({ text: '', spacing: { before: 60 } }),
+            new Paragraph({ text: '', spacing: { before: 40 } }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: sigBuffer
-                ? [new ImageRun({ data: sigBuffer, transformation: { width: 50, height: 25 } })]
+                ? [new ImageRun({ data: sigBuffer, transformation: { width: 50, height: 20 } })]
                 : [new TextRun({ text: '', size: 7 })],
-              spacing: { after: 10 },
+              spacing: { after: 2 },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: [new TextRun({ text: headmasterName ?? 'Kepala Sekolah', size: 7, bold: true })],
               spacing: { after: 0 },
+              border: { top: { style: BorderStyle.SINGLE, size: 2, color: '000000' } },
             }),
             new Paragraph({
               alignment: AlignmentType.CENTER,
@@ -212,24 +236,26 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               children: cellChildren,
               width: { size: 50, type: WidthType.PERCENTAGE },
               borders: {
-                top: { style: BorderStyle.DASHED, size: 6, color: '60a5fa' },
-                bottom: { style: BorderStyle.DASHED, size: 6, color: '60a5fa' },
-                left: { style: BorderStyle.DASHED, size: 6, color: '60a5fa' },
-                right: { style: BorderStyle.DASHED, size: 6, color: '60a5fa' },
+                top: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
+                bottom: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
+                left: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
+                right: { style: BorderStyle.DASHED, size: 8, color: '3b82f6' },
               },
+              shading: cardBgColor ? { type: ShadingType.CLEAR, fill: cardBgColor.replace('#', '') } : undefined,
             }),
           )
         }
-        rows.push(new TableRow({ children: cells }))
       }
-
-      children.push(
-        new Table({
-          rows,
-          width: { size: 100, type: WidthType.PERCENTAGE },
-        }),
-      )
+      rows.push(new TableRow({ children: cells }))
     }
+
+    children.push(
+      new Table({
+        rows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      }),
+    )
+  }
 
   const doc = new Document({
     sections: [{ children }],
@@ -238,14 +264,14 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   const blob = await Packer.toBlob(doc)
   downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.docx`)
 }
-}
 
 /* ------------------------------------------------------------------ */
 /* PDF (.pdf) - 6 kartu per lembar (2 kolom x 3 baris)                 */
+/* Layout: foto di kiri, detail di kanan                               */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, headmasterSignature, headmasterName, headmasterNip, includePhoto } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -253,13 +279,16 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
   const pageH = 297
-  const margin = 8
-  const gap = 4
+  const margin = 6
+  const gap = 3
   const cardW = (pageW - margin * 2 - gap) / 2
-  const cardH = (pageH - margin * 2 - gap * 2 - 12) / 3
+  const cardH = (pageH - margin * 2 - gap * 2 - 14) / 3
   const cardsPerPage = 6
 
   const totalPages = Math.ceil(students.length / cardsPerPage)
+
+  // Background color
+  const bgColor = cardBgColor ? hexToRgb(cardBgColor) : [255, 255, 255] as [number, number, number]
 
   for (let page = 0; page < totalPages; page++) {
     if (page > 0) pdf.addPage()
@@ -286,9 +315,13 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       const x = margin + col * (cardW + gap)
       const y = 20 + row * (cardH + gap)
 
+      // Background kartu
+      pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2])
+      pdf.rect(x, y, cardW, cardH, 'F')
+
       // Border kartu (dashed cut line)
       pdf.setDrawColor(96, 165, 250)
-      pdf.setLineWidth(0.4)
+      pdf.setLineWidth(0.5)
       pdf.setLineDashPattern([2, 2], 0)
       pdf.rect(x, y, cardW, cardH)
       pdf.setLineDashPattern([], 0)
@@ -313,51 +346,53 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.text(yearLine, x + cardW / 2, cursorY + 2, { align: 'center' })
       cursorY += 6
 
-      // Foto siswa (opsional)
-      const includePhoto = info.includePhoto !== false
-      if (includePhoto) {
-        const photoSize = 18
-        const photoX = x + (cardW - photoSize) / 2
+      // Layout: foto (kiri) + detail (kanan)
+      const includePhotoVal = includePhoto !== false
+      const photoSize = includePhotoVal ? 22 : 0
+      const photoX = x + 3
+      const detailX = includePhotoVal ? x + photoSize + 6 : x + 3
+      const detailW = includePhotoVal ? cardW - photoSize - 9 : cardW - 6
+
+      if (includePhotoVal) {
         if (student.photo) {
           const dataUrl = await fetchImageDataUrl(student.photo)
           if (dataUrl) {
             try {
-              pdf.addImage(dataUrl, 'PNG', photoX, cursorY, photoSize, photoSize * 1.2)
+              pdf.addImage(dataUrl, 'PNG', photoX, cursorY, photoSize, photoSize * 1.25)
             } catch {
               pdf.setFillColor(240, 240, 240)
-              pdf.rect(photoX, cursorY, photoSize, photoSize * 1.2, 'F')
+              pdf.rect(photoX, cursorY, photoSize, photoSize * 1.25, 'F')
               pdf.setFontSize(5)
-              pdf.text('[Foto]', photoX + photoSize / 2, cursorY + (photoSize * 1.2) / 2, { align: 'center' })
+              pdf.text('[Foto]', photoX + photoSize / 2, cursorY + (photoSize * 1.25) / 2, { align: 'center' })
             }
           } else {
             pdf.setFillColor(240, 240, 240)
-            pdf.rect(photoX, cursorY, photoSize, photoSize * 1.2, 'F')
+            pdf.rect(photoX, cursorY, photoSize, photoSize * 1.25, 'F')
             pdf.setFontSize(5)
-            pdf.text('[Foto]', photoX + photoSize / 2, cursorY + (photoSize * 1.2) / 2, { align: 'center' })
+            pdf.text('[Foto]', photoX + photoSize / 2, cursorY + (photoSize * 1.25) / 2, { align: 'center' })
           }
         } else {
           pdf.setFillColor(240, 240, 240)
-          pdf.rect(photoX, cursorY, photoSize, photoSize * 1.2, 'F')
+          pdf.rect(photoX, cursorY, photoSize, photoSize * 1.25, 'F')
           pdf.setFontSize(5)
-          pdf.text('[Foto]', photoX + photoSize / 2, cursorY + (photoSize * 1.2) / 2, { align: 'center' })
+          pdf.text('[Foto]', photoX + photoSize / 2, cursorY + (photoSize * 1.25) / 2, { align: 'center' })
         }
-        cursorY += photoSize * 1.2 + 3
       }
 
-      // Nama siswa
+      // Nama siswa (di kanan foto, bagian atas)
+      const nameY = cursorY
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(0, 0, 0)
-      pdf.text(student.name, x + cardW / 2, cursorY, { align: 'center' })
-      cursorY += 3.5
+      pdf.text(student.name, detailX, nameY + 3, { align: 'left' })
 
       // NISN
       pdf.setFontSize(6.5)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`NISN: ${student.nisn}`, x + cardW / 2, cursorY, { align: 'center' })
-      cursorY += 4
+      pdf.text(`NISN: ${student.nisn}`, detailX, nameY + 7, { align: 'left' })
 
-      // Detail ujian
+      // Detail ujian (di bawah nama)
+      let detailY = nameY + 10
       pdf.setFontSize(6.5)
       const details = [
         { label: 'Ujian', value: exam.title },
@@ -368,19 +403,19 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       ]
       for (const d of details) {
         pdf.setFont('helvetica', 'bold')
-        pdf.text(`${d.label}:`, x + 3, cursorY)
+        pdf.text(`${d.label}:`, detailX, detailY)
         pdf.setFont('helvetica', 'normal')
-        pdf.text(d.value, x + 18, cursorY)
-        cursorY += 3.5
+        pdf.text(d.value, detailX + 16, detailY)
+        detailY += 3.5
       }
 
-      // Area tanda tangan kepala sekolah (di bawah)
-      const sigY = y + cardH - 18
+      // Area tanda tangan kepala sekolah (di bawah kartu)
+      const sigY = y + cardH - 16
       if (headmasterSignature) {
         const dataUrl = await fetchImageDataUrl(headmasterSignature)
         if (dataUrl) {
           try {
-            pdf.addImage(dataUrl, 'PNG', x + (cardW - 30) / 2, sigY, 30, 12)
+            pdf.addImage(dataUrl, 'PNG', x + (cardW - 28) / 2, sigY, 28, 10)
           } catch {
             // ignore
           }
@@ -388,11 +423,16 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       }
       pdf.setFontSize(6)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(headmasterName ?? 'Kepala Sekolah', x + cardW / 2, sigY + 14, { align: 'center' })
+      pdf.text(headmasterName ?? 'Kepala Sekolah', x + cardW / 2, sigY + 12, { align: 'center' })
       if (headmasterNip) {
         pdf.setFontSize(5.5)
-        pdf.text(`NIP. ${headmasterNip}`, x + cardW / 2, sigY + 17, { align: 'center' })
+        pdf.text(`NIP. ${headmasterNip}`, x + cardW / 2, sigY + 15, { align: 'center' })
       }
+      // Garis tanda tangan
+      pdf.setDrawColor(0, 0, 0)
+      pdf.setLineWidth(0.2)
+      pdf.setLineDashPattern([], 0)
+      pdf.line(x + (cardW - 30) / 2, sigY + 11, x + (cardW + 30) / 2, sigY + 11)
     }
   }
 

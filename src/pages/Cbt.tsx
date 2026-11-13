@@ -69,6 +69,8 @@ export function Cbt() {
   const [cardExamDate, setCardExamDate] = useState(new Date().toISOString().slice(0, 10))
   const [cardExamTime, setCardExamTime] = useState('07:30 - 09:00')
   const [cardIncludePhoto, setCardIncludePhoto] = useState(true)
+  const [cardBgColor, setCardBgColor] = useState('#f0f9ff')
+  const [cardBgImage, setCardBgImage] = useState<string | null>(null)
   const [cardGenerating, setCardGenerating] = useState(false)
 
   const classMap = useMemo(() => new Map(data.classes.map((clazz) => [clazz.id, clazz])), [data.classes])
@@ -128,6 +130,8 @@ export function Cbt() {
         headmasterName: data.settings.school.headmaster,
         headmasterNip: data.settings.school.headmasterNip,
         includePhoto: cardIncludePhoto,
+        cardBgColor: cardBgColor,
+        cardBgImage: cardBgImage ?? undefined,
       }
       if (format === 'word') {
         await generateExamCardWord(info)
@@ -486,6 +490,50 @@ export function Cbt() {
             <label htmlFor="includePhoto" className="text-sm text-slate-700">
               Sertakan foto siswa di kartu
             </label>
+          </div>
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700">Warna Background Kartu</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={cardBgColor}
+                onChange={(e) => setCardBgColor(e.target.value)}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-slate-200"
+              />
+              <span className="text-xs text-slate-500">{cardBgColor}</span>
+              <button
+                type="button"
+                onClick={() => setCardBgColor('#ffffff')}
+                className="text-xs font-medium text-brand-600 hover:text-brand-700"
+              >
+                Reset (putih)
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700">Gambar Background (opsional)</label>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/jpg"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  const reader = new FileReader()
+                  reader.onload = () => setCardBgImage(reader.result as string)
+                  reader.readAsDataURL(file)
+                }
+              }}
+              className="block w-full text-xs text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+            />
+            {cardBgImage && (
+              <button
+                type="button"
+                onClick={() => setCardBgImage(null)}
+                className="text-xs font-medium text-rose-600 hover:text-rose-700"
+              >
+                Hapus gambar background
+              </button>
+            )}
           </div>
           {cardExamId && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
