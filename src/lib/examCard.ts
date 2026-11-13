@@ -33,18 +33,39 @@ function formatDateLong(isoDate: string): string {
   return `${dayName(isoDate)}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
 }
 
+/** Konversi gambar (URL/data URL) menjadi PNG data URL via canvas. */
+async function toPngDataUrl(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth || img.width
+        canvas.height = img.naturalHeight || img.height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { resolve(null); return }
+        ctx.drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/png'))
+      } catch {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve(null)
+    img.src = src
+  })
+}
+
 async function fetchImageBuffer(src: string): Promise<ArrayBuffer | null> {
   try {
-    if (src.startsWith('data:')) {
-      const base64 = src.split(',')[1]
-      const binary = atob(base64)
-      const bytes = new Uint8Array(binary.length)
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-      return bytes.buffer
-    }
-    const res = await fetch(src)
-    if (!res.ok) return null
-    return await res.arrayBuffer()
+    // Konversi ke PNG dulu agar cocok dengan ekstensi .png di docx.
+    const pngDataUrl = await toPngDataUrl(src)
+    if (!pngDataUrl) return null
+    const base64 = pngDataUrl.split(',')[1]
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    return bytes.buffer
   } catch {
     return null
   }
@@ -52,6 +73,9 @@ async function fetchImageBuffer(src: string): Promise<ArrayBuffer | null> {
 
 async function fetchImageDataUrl(src: string): Promise<string | null> {
   try {
+    // Konversi ke PNG untuk konsistensi.
+    const pngDataUrl = await toPngDataUrl(src)
+    if (pngDataUrl) return pngDataUrl
     if (src.startsWith('data:')) return src
     const res = await fetch(src)
     if (!res.ok) return null
@@ -66,6 +90,8 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
     return null
   }
 }
+
+
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
@@ -104,7 +130,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
         if (student) {
           const photoBuffer = (includePhoto !== false && student.photo) ? await fetchImageBuffer(student.photo) : null
           const sigBuffer = headmasterSignature ? await fetchImageBuffer(headmasterSignature) : null
-          const bgBuffer = cardBgImage ? await fetchImageBuffer(cardBgImage) : null
 
           const cellChildren: (Paragraph | Table)[] = []
 
@@ -142,7 +167,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
               photoChildren.push(
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [new ImageRun({ data: photoBuffer, transformation: { width: 40, height: 50 } })],
+                  children: [new ImageRun({ data: photoBuffer!, transformation: { width: 40, height: 50 } })],
                 }),
               )
             } else {
@@ -214,7 +239,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             new Paragraph({
               alignment: AlignmentType.CENTER,
               children: sigBuffer
-                ? [new ImageRun({ data: sigBuffer, transformation: { width: 50, height: 20 } })]
+                ? [new ImageRun({ data: sigBuffer!, transformation: { width: 50, height: 20 } })]
                 : [new TextRun({ text: '', size: 7 })],
               spacing: { after: 2 },
             }),
