@@ -48,7 +48,7 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
 }
 
 /* ------------------------------------------------------------------ */
-/* Word (.doc) - HTML yang bisa dibuka Word, 6 kartu per lembar A4      */
+/* Word (.doc) - HTML table layout, 6 kartu per lembar A4               */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
@@ -56,10 +56,10 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
+  const bgColor = cardBgColor || '#f0f9ff'
 
   const cardsPerPage = 6
   const totalPages = Math.ceil(students.length / cardsPerPage)
-  const bgColor = cardBgColor || '#f0f9ff'
 
   let html = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -72,22 +72,17 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
   .page { page-break-after: always; }
   .page:last-child { page-break-after: auto; }
-  .grid { display: table; width: 100%; border-collapse: separate; border-spacing: 4mm; }
-  .row { display: table-row; }
-  .card {
-    display: table-cell;
+  table.grid { width: 100%; border-collapse: separate; border-spacing: 4mm 4mm; }
+  td.card {
     width: 50%;
     border: 2px dashed #3b82f6;
-    border-radius: 6px;
     padding: 6px;
-    background-color: ${bgColor};
-    ${cardBgImage ? `background-image: url('${cardBgImage}'); background-size: cover; background-position: center;` : ''}
     vertical-align: top;
-    break-inside: avoid;
+    background-color: ${bgColor};
   }
   .card-header {
     text-align: center;
-    background: #dbeafe;
+    background-color: #dbeafe;
     padding: 4px;
     margin: -6px -6px 6px -6px;
     border-bottom: 1px solid #93c5fd;
@@ -95,22 +90,19 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   .card-header .title { font-size: 9pt; font-weight: bold; color: #1e40af; }
   .card-header .school { font-size: 8pt; font-weight: bold; }
   .card-header .year { font-size: 7pt; font-style: italic; }
-  .card-body { display: flex; gap: 6px; }
   .card-photo {
     width: 40px;
     height: 50px;
-    background: #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background-color: #e5e7eb;
+    text-align: center;
+    vertical-align: middle;
     font-size: 7pt;
     color: #9ca3af;
-    flex-shrink: 0;
-    border-radius: 4px;
-    overflow: hidden;
+    float: left;
+    margin-right: 6px;
+    margin-bottom: 4px;
   }
-  .card-photo img { width: 100%; height: 100%; object-fit: cover; }
-  .card-details { flex: 1; }
+  .card-photo img { width: 40px; height: 50px; }
   .card-name { font-size: 9pt; font-weight: bold; margin-bottom: 2px; }
   .card-nisn { font-size: 7pt; color: #6b7280; margin-bottom: 4px; }
   .card-detail { font-size: 7pt; margin-bottom: 1px; }
@@ -124,7 +116,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   .card-sig img { max-width: 50px; max-height: 20px; }
   .card-sig .name { font-size: 7pt; font-weight: bold; }
   .card-sig .nip { font-size: 6pt; color: #6b7280; }
-  .spacer { height: 4mm; }
 </style>
 </head>
 <body>
@@ -133,18 +124,17 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   for (let page = 0; page < totalPages; page++) {
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
 
-    html += `<div class="page">\n`
+    html += `<div class="page"><table class="grid" cellspacing="0" cellpadding="0">\n`
 
-    // 3 baris, masing-masing 2 kolom
     for (let r = 0; r < 3; r++) {
-      html += `<div class="grid" style="margin-bottom: 4mm;">\n`
+      html += `<tr>\n`
       for (let c = 0; c < 2; c++) {
         const idx = r * 2 + c
         const student = pageStudents[idx]
         if (student) {
           const photoHtml = (includePhoto !== false && student.photo)
-            ? `<div class="card-photo"><img src="${student.photo}" alt="Foto" /></div>`
-            : (includePhoto !== false ? `<div class="card-photo">[Foto]</div>` : '')
+            ? `<td style="width:42px; vertical-align:top; padding-right:6px;"><img src="${student.photo}" width="40" height="50" alt="Foto" /></td>`
+            : (includePhoto !== false ? `<td style="width:42px; vertical-align:top; padding-right:6px; background-color:#e5e7eb; text-align:center; font-size:7pt; color:#9ca3af;">[Foto]</td>` : '')
 
           const details = [
             { label: 'Ujian', value: exam.title },
@@ -155,43 +145,45 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
           ]
 
           const sigHtml = headmasterSignature
-            ? `<img src="${headmasterSignature}" alt="TTD" />`
+            ? `<img src="${headmasterSignature}" width="50" height="20" alt="TTD" />`
             : ''
 
-          html += `<div class="card">
+          const detailsHtml = details.map((d) => `<div class="card-detail"><b>${d.label}:</b> ${d.value}</div>`).join('')
+
+          html += `<td class="card" style="background-color:${bgColor};">
   <div class="card-header">
     <div class="title">${title}</div>
     <div class="school">${subtitle}</div>
     <div class="year">${yearLine}</div>
   </div>
-  <div class="card-body">
-    ${photoHtml}
-    <div class="card-details">
-      <div class="card-name">${student.name}</div>
-      <div class="card-nisn">NISN: ${student.nisn}</div>
-      ${details.map((d) => `<div class="card-detail"><b>${d.label}:</b> ${d.value}</div>`).join('\n      ')}
-    </div>
-  </div>
+  <table cellpadding="0" cellspacing="0" style="width:100%; margin-top:4px;">
+    <tr>
+      ${photoHtml}
+      <td style="vertical-align:top;">
+        <div class="card-name">${student.name}</div>
+        <div class="card-nisn">NISN: ${student.nisn}</div>
+        ${detailsHtml}
+      </td>
+    </tr>
+  </table>
   <div class="card-sig">
     ${sigHtml}
     <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
     <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
   </div>
-</div>\n`
+</td>\n`
         } else {
-          // Cell kosong untuk genapkan grid
-          html += `<div class="card" style="border: none; background: transparent;"></div>\n`
+          html += `<td class="card" style="border:none; background:transparent;"></td>\n`
         }
       }
-      html += `</div>\n`
+      html += `</tr>\n`
     }
 
-    html += `</div>\n`
+    html += `</table></div>\n`
   }
 
   html += `</body></html>`
 
-  // Download as .doc (Word can open HTML files)
   const blob = new Blob(['\ufeff' + html], { type: 'application/msword' })
   downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.doc`)
 }
@@ -222,7 +214,6 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
   for (let page = 0; page < totalPages; page++) {
     if (page > 0) pdf.addPage()
 
-    // Judul halaman
     pdf.setFontSize(11)
     pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(30, 64, 175)
@@ -244,11 +235,9 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       const x = margin + col * (cardW + gap)
       const y = 20 + row * (cardH + gap)
 
-      // Background kartu
       pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2])
       pdf.rect(x, y, cardW, cardH, 'F')
 
-      // Border kartu (dashed cut line)
       pdf.setDrawColor(96, 165, 250)
       pdf.setLineWidth(0.5)
       pdf.setLineDashPattern([2, 2], 0)
@@ -257,7 +246,6 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
 
       let cursorY = y + 3
 
-      // Header: judul + sekolah + tahun ajaran
       pdf.setFillColor(219, 234, 254)
       pdf.rect(x + 0.5, y + 0.5, cardW - 1, 10, 'F')
       pdf.setFontSize(7)
@@ -275,12 +263,10 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.text(yearLine, x + cardW / 2, cursorY + 2, { align: 'center' })
       cursorY += 6
 
-      // Layout: foto (kiri) + detail (kanan)
       const includePhotoVal = includePhoto !== false
       const photoSize = includePhotoVal ? 22 : 0
       const photoX = x + 3
       const detailX = includePhotoVal ? x + photoSize + 6 : x + 3
-      const detailW = includePhotoVal ? cardW - photoSize - 9 : cardW - 6
 
       if (includePhotoVal) {
         if (student.photo) {
@@ -308,19 +294,16 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
         }
       }
 
-      // Nama siswa (di kanan foto, bagian atas)
       const nameY = cursorY
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(0, 0, 0)
       pdf.text(student.name, detailX, nameY + 3, { align: 'left' })
 
-      // NISN
       pdf.setFontSize(6.5)
       pdf.setFont('helvetica', 'normal')
       pdf.text(`NISN: ${student.nisn}`, detailX, nameY + 7, { align: 'left' })
 
-      // Detail ujian (di bawah nama)
       let detailY = nameY + 10
       pdf.setFontSize(6.5)
       const details = [
@@ -338,7 +321,6 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
         detailY += 3.5
       }
 
-      // Area tanda tangan kepala sekolah (di bawah kartu)
       const sigY = y + cardH - 16
       if (headmasterSignature) {
         const dataUrl = await fetchImageDataUrl(headmasterSignature)
@@ -357,7 +339,6 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
         pdf.setFontSize(5.5)
         pdf.text(`NIP. ${headmasterNip}`, x + cardW / 2, sigY + 15, { align: 'center' })
       }
-      // Garis tanda tangan
       pdf.setDrawColor(0, 0, 0)
       pdf.setLineWidth(0.2)
       pdf.setLineDashPattern([], 0)
