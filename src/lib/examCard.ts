@@ -110,6 +110,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
         if (student) {
           const details = [
             { label: 'Nama', value: student.name },
+            { label: 'Kelas', value: student.classId.replace('k', '') },
             { label: 'NIS/NISN', value: student.nisn },
             { label: 'No. Peserta', value: info.participantNumbers?.[student.id] || String(students.indexOf(student) + 1) },
             { label: 'Ruang Ujian', value: info.examRoom || '-' },
@@ -276,6 +277,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.setFontSize(6.5)
       const details = [
         { label: 'Nama', value: student.name },
+        { label: 'Kelas', value: student.classId.replace('k', '') },
         { label: 'NIS/NISN', value: student.nisn },
         { label: 'No. Peserta', value: info.participantNumbers?.[student.id] || String(students.indexOf(student) + 1) },
         { label: 'Ruang Ujian', value: info.examRoom || '-' },

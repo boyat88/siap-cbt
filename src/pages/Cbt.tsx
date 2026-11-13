@@ -466,12 +466,7 @@ export function Cbt() {
         }
       >
         <div className="space-y-4">
-          <Select
-            label="Pilih Ujian"
-            options={cbt.exams.map((e) => ({ value: e.id, label: `${e.title} (${e.subject})` }))}
-            value={cardExamId}
-            onChange={(e) => setCardExamId(e.target.value)}
-          />
+
           <Select
             label="Mode Cetak"
             options={[
@@ -688,7 +683,7 @@ export function Cbt() {
               </button>
             )}
           </div>
-          {cardExamId && (
+          {cbt.exams.length > 0 && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-500">
               <p><strong>{data.students.filter((s) => {
                 if (s.status !== 'aktif') return false
