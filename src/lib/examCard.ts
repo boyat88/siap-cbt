@@ -153,7 +153,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             ? `<img src="${headmasterSignature}" width="50" height="20" alt="TTD" />`
             : ''
 
-          const detailsHtml = details.map((d) => `<div class="card-detail"><b>${d.label}:</b> ${d.value}</div>`).join('')
+          const detailsHtml = details.map((d) => `<div class="card-detail"><span style="display:inline-block;width:62px;font-weight:bold;text-align:right;padding-right:2px;">${d.label}:</span> ${d.value}</div>`).join('')
 
           html += `<td class="card" style="background-color:${bgColor};">
   <div class="card-header">
@@ -331,9 +331,10 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       ]
       for (const d of details) {
         pdf.setFont('helvetica', 'bold')
-        pdf.text(`${d.label}:`, detailX, detailY)
+        // Label rata kanan agar titik dua (:) lurus.
+        pdf.text(`${d.label}:`, detailX + 18, detailY, { align: 'right' })
         pdf.setFont('helvetica', 'normal')
-        pdf.text(d.value, detailX + 16, detailY)
+        pdf.text(d.value, detailX + 20, detailY)
         detailY += 3.5
       }
 
