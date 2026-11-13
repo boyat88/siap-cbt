@@ -137,7 +137,7 @@ export function Cbt() {
         exam,
         students,
         examDate: cardExamDate,
-        examTime: cardExamTime,
+        examTime: '',
         examType: cardExamType,
         schoolName: data.settings.school.name,
         academicYear: data.settings.academicYear,
@@ -589,13 +589,6 @@ export function Cbt() {
             type="date"
             value={cardExamDate}
             onChange={(e) => setCardExamDate(e.target.value)}
-            required
-          />
-          <Input
-            label="Waktu Ujian"
-            placeholder="cth. 07:30 - 09:00"
-            value={cardExamTime}
-            onChange={(e) => setCardExamTime(e.target.value)}
             required
           />
           <Input

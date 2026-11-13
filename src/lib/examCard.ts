@@ -122,8 +122,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
     <div class="year">${yearLine}</div>
     ${semesterLine ? `<div class="year">${semesterLine}</div>` : ''}
   </div>
-  <div class="name">${student.name}</div>
-  <div class="nisn">NISN: ${student.nisn}</div>
   <table cellpadding="0" cellspacing="0" style="width:100%; margin-top:4px;">
     <tr>
       ${includePhoto !== false && student.photo ? `<td style="width:45px; vertical-align:top; padding-right:6px;"><img src="${student.photo}" width="42" height="52" alt="Foto" style="border:1px solid #ccc;" /></td>` : (includePhoto !== false ? `<td style="width:45px; vertical-align:top; padding-right:6px; background-color:#e5e7eb; text-align:center; font-size:7pt; color:#9ca3af; height:52px;">[Foto]</td>` : '')}
@@ -274,16 +272,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       }
 
       const nameY = cursorY
-      pdf.setFontSize(8)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(0, 0, 0)
-      pdf.text(student.name, detailX, nameY + 3, { align: 'left' })
-
-      pdf.setFontSize(6.5)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`NISN: ${student.nisn}`, detailX, nameY + 7, { align: 'left' })
-
-      let detailY = nameY + 10
+      let detailY = nameY
       pdf.setFontSize(6.5)
       const details = [
         { label: 'Nama', value: student.name },
