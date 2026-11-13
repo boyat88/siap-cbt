@@ -35,7 +35,6 @@ function formatDateLong(isoDate: string): string {
 
 async function fetchImageBuffer(src: string): Promise<ArrayBuffer | null> {
   try {
-    // Konversi ke PNG via canvas agar cocok dengan .png di docx.
     const img = new Image()
     img.crossOrigin = 'anonymous'
     const dataUrl = await new Promise<string | null>((resolve) => {
@@ -86,7 +85,7 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -118,7 +117,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 
           const cellChildren: (Paragraph | Table)[] = []
 
-          // Header kartu
+          // Header
           cellChildren.push(
             new Paragraph({
               alignment: AlignmentType.CENTER,
@@ -287,12 +286,12 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor } = info
-  const printLocation = info.printLocation ?? 'Cikatomas'
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
   const semesterLine = semester ? `Semester ${semester}` : ''
+  const printLocation = info.printLocation ?? 'Cikatomas'
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
@@ -304,8 +303,6 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
   const cardsPerPage = 6
 
   const totalPages = Math.ceil(students.length / cardsPerPage)
-
-  const bgColor = cardBgColor ? hexToRgb(cardBgColor) : [240, 249, 255] as [number, number, number]
 
   for (let page = 0; page < totalPages; page++) {
     if (page > 0) pdf.addPage()
@@ -336,7 +333,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       const x = margin + col * (cardW + gap)
       const y = 22 + row * (cardH + gap)
 
-      pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2])
+      pdf.setFillColor(240, 249, 255)
       pdf.rect(x, y, cardW, cardH, 'F')
 
       pdf.setDrawColor(30, 64, 175)
