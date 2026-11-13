@@ -143,7 +143,6 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             : (includePhoto !== false ? `<td style="width:42px; vertical-align:top; padding-right:6px; background-color:#e5e7eb; text-align:center; font-size:7pt; color:#9ca3af;">[Foto]</td>` : '')
 
           const details = [
-            { label: 'Ujian', value: exam.title },
             { label: 'Mapel', value: exam.subject },
             { label: 'Hari/Tgl', value: formatDateLong(examDate) },
             { label: 'Waktu', value: examTime },
@@ -174,7 +173,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
     </tr>
   </table>
   <div class="card-sig">
-    <div style="text-align:right; font-size:7pt; margin-bottom:4px;">${printLocation}, ${printDate}</div>
+    <div style="text-align:center; font-size:7pt; margin-bottom:4px;">${printLocation}, ${printDate}</div>
     ${sigHtml}
     <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
     <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
@@ -325,7 +324,6 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       let detailY = nameY + 10
       pdf.setFontSize(6.5)
       const details = [
-        { label: 'Ujian', value: exam.title },
         { label: 'Mapel', value: exam.subject },
         { label: 'Hari/Tgl', value: formatDateLong(examDate) },
         { label: 'Waktu', value: examTime },
@@ -343,7 +341,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       // Titimangsa
       pdf.setFontSize(6)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`${printLocation}, ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`, x + cardW - 3, sigY, { align: 'right' })
+      pdf.text(`${printLocation}, ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`, x + cardW / 2, sigY, { align: 'center' })
       sigY += 4
       if (headmasterSignature) {
         const dataUrl = await fetchImageDataUrl(headmasterSignature)
