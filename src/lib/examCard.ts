@@ -1,4 +1,3 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ShadingType } from 'docx'
 import { jsPDF } from 'jspdf'
 import type { CbtExam } from '../types'
 import type { Student } from '../types'
@@ -15,9 +14,7 @@ export interface ExamCardInfo {
   headmasterName?: string
   headmasterNip?: string
   includePhoto?: boolean
-  /** Warna background kartu (hex, mis. #f0f9ff). Default putih. */
   cardBgColor?: string
-  /** Data URL gambar background (opsional). */
   cardBgImage?: string
 }
 
@@ -33,49 +30,8 @@ function formatDateLong(isoDate: string): string {
   return `${dayName(isoDate)}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
 }
 
-/** Konversi gambar (URL/data URL) menjadi PNG data URL via canvas. */
-async function toPngDataUrl(src: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas')
-        canvas.width = img.naturalWidth || img.width
-        canvas.height = img.naturalHeight || img.height
-        const ctx = canvas.getContext('2d')
-        if (!ctx) { resolve(null); return }
-        ctx.drawImage(img, 0, 0)
-        resolve(canvas.toDataURL('image/png'))
-      } catch {
-        resolve(null)
-      }
-    }
-    img.onerror = () => resolve(null)
-    img.src = src
-  })
-}
-
-async function fetchImageBuffer(src: string): Promise<ArrayBuffer | null> {
-  try {
-    // Konversi ke PNG dulu agar cocok dengan ekstensi .png di docx.
-    const pngDataUrl = await toPngDataUrl(src)
-    if (!pngDataUrl) return null
-    const base64 = pngDataUrl.split(',')[1]
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-    return bytes.buffer
-  } catch {
-    return null
-  }
-}
-
 async function fetchImageDataUrl(src: string): Promise<string | null> {
   try {
-    // Konversi ke PNG untuk konsistensi.
-    const pngDataUrl = await toPngDataUrl(src)
-    if (pngDataUrl) return pngDataUrl
     if (src.startsWith('data:')) return src
     const res = await fetch(src)
     if (!res.ok) return null
@@ -91,16 +47,8 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
   }
 }
 
-
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '')
-  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)]
-}
-
 /* ------------------------------------------------------------------ */
-/* Word (.docx) - 6 kartu per lembar (2 kolom x 3 baris)               */
-/* Layout: foto di kiri, detail di kanan                               */
+/* Word (.doc) - HTML yang bisa dibuka Word, 6 kartu per lembar A4      */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
@@ -111,89 +59,93 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 
   const cardsPerPage = 6
   const totalPages = Math.ceil(students.length / cardsPerPage)
+  const bgColor = cardBgColor || '#f0f9ff'
 
-  const children: (Paragraph | Table)[] = []
+  let html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Kartu Ujian</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+  @page { size: 21cm 29.7cm; margin: 8mm; }
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .grid { display: table; width: 100%; border-collapse: separate; border-spacing: 4mm; }
+  .row { display: table-row; }
+  .card {
+    display: table-cell;
+    width: 50%;
+    border: 2px dashed #3b82f6;
+    border-radius: 6px;
+    padding: 6px;
+    background-color: ${bgColor};
+    ${cardBgImage ? `background-image: url('${cardBgImage}'); background-size: cover; background-position: center;` : ''}
+    vertical-align: top;
+    break-inside: avoid;
+  }
+  .card-header {
+    text-align: center;
+    background: #dbeafe;
+    padding: 4px;
+    margin: -6px -6px 6px -6px;
+    border-bottom: 1px solid #93c5fd;
+  }
+  .card-header .title { font-size: 9pt; font-weight: bold; color: #1e40af; }
+  .card-header .school { font-size: 8pt; font-weight: bold; }
+  .card-header .year { font-size: 7pt; font-style: italic; }
+  .card-body { display: flex; gap: 6px; }
+  .card-photo {
+    width: 40px;
+    height: 50px;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7pt;
+    color: #9ca3af;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .card-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .card-details { flex: 1; }
+  .card-name { font-size: 9pt; font-weight: bold; margin-bottom: 2px; }
+  .card-nisn { font-size: 7pt; color: #6b7280; margin-bottom: 4px; }
+  .card-detail { font-size: 7pt; margin-bottom: 1px; }
+  .card-detail b { font-weight: bold; }
+  .card-sig {
+    text-align: center;
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px solid #d1d5db;
+  }
+  .card-sig img { max-width: 50px; max-height: 20px; }
+  .card-sig .name { font-size: 7pt; font-weight: bold; }
+  .card-sig .nip { font-size: 6pt; color: #6b7280; }
+  .spacer { height: 4mm; }
+</style>
+</head>
+<body>
+`
 
   for (let page = 0; page < totalPages; page++) {
-    if (page > 0) {
-      children.push(new Paragraph({ children: [new TextRun({ break: 1 })], pageBreakBefore: true }))
-    }
-
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
 
-    const rows: TableRow[] = []
+    html += `<div class="page">\n`
+
+    // 3 baris, masing-masing 2 kolom
     for (let r = 0; r < 3; r++) {
-      const cells: TableCell[] = []
+      html += `<div class="grid" style="margin-bottom: 4mm;">\n`
       for (let c = 0; c < 2; c++) {
         const idx = r * 2 + c
         const student = pageStudents[idx]
         if (student) {
-          const photoBuffer = (includePhoto !== false && student.photo) ? await fetchImageBuffer(student.photo) : null
-          const sigBuffer = headmasterSignature ? await fetchImageBuffer(headmasterSignature) : null
+          const photoHtml = (includePhoto !== false && student.photo)
+            ? `<div class="card-photo"><img src="${student.photo}" alt="Foto" /></div>`
+            : (includePhoto !== false ? `<div class="card-photo">[Foto]</div>` : '')
 
-          const cellChildren: (Paragraph | Table)[] = []
-
-          // Header kartu: judul + sekolah + tahun ajaran
-          cellChildren.push(
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: title, bold: true, size: 9, color: '1e40af' })],
-              spacing: { after: 0 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: subtitle, bold: true, size: 8 })],
-              spacing: { after: 0 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: yearLine, size: 7, italics: true })],
-              spacing: { after: 60 },
-            }),
-          )
-
-          // Baris: foto (kiri) + detail (kanan) dalam tabel nested
-          const detailRows: TableRow[] = []
-          const detailCells: TableCell[] = []
-
-          // Kolom foto
-          if (includePhoto !== false) {
-            const photoChildren: Paragraph[] = []
-            if (photoBuffer) {
-              photoChildren.push(
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [new ImageRun({ data: photoBuffer!, transformation: { width: 40, height: 50 } })],
-                }),
-              )
-            } else {
-              photoChildren.push(
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  children: [new TextRun({ text: '[Foto]', size: 7, italics: true, color: '999999' })],
-                }),
-              )
-            }
-            detailCells.push(
-              new TableCell({
-                children: photoChildren,
-                width: { size: 25, type: WidthType.PERCENTAGE },
-              }),
-            )
-          }
-
-          // Kolom detail
-          const detailChildren: Paragraph[] = []
-          detailChildren.push(
-            new Paragraph({
-              children: [new TextRun({ text: student.name, bold: true, size: 9 })],
-              spacing: { after: 20 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: `NISN: ${student.nisn}`, size: 7 })],
-              spacing: { after: 40 },
-            }),
-          )
           const details = [
             { label: 'Ujian', value: exam.title },
             { label: 'Mapel', value: exam.subject },
@@ -201,91 +153,51 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
             { label: 'Waktu', value: examTime },
             { label: 'Kelas', value: student.classId.replace('k', '') },
           ]
-          for (const d of details) {
-            detailChildren.push(
-              new Paragraph({
-                children: [
-                  new TextRun({ text: `${d.label}: `, bold: true, size: 7 }),
-                  new TextRun({ text: d.value, size: 7 }),
-                ],
-                spacing: { after: 2 },
-              }),
-            )
-          }
 
-          detailCells.push(
-            new TableCell({
-              children: detailChildren,
-              width: { size: includePhoto !== false ? 75 : 100, type: WidthType.PERCENTAGE },
-            }),
-          )
+          const sigHtml = headmasterSignature
+            ? `<img src="${headmasterSignature}" alt="TTD" />`
+            : ''
 
-          cellChildren.push(
-            new Table({
-              rows: [new TableRow({ children: detailCells })],
-              width: { size: 100, type: WidthType.PERCENTAGE },
-            }),
-          )
-
-          // Area tanda tangan kepala sekolah
-          cellChildren.push(
-            new Paragraph({ text: '', spacing: { before: 40 } }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: sigBuffer
-                ? [new ImageRun({ data: sigBuffer!, transformation: { width: 50, height: 20 } })]
-                : [new TextRun({ text: '', size: 7 })],
-              spacing: { after: 2 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: headmasterName ?? 'Kepala Sekolah', size: 7, bold: true })],
-              spacing: { after: 0 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: headmasterNip ? `NIP. ${headmasterNip}` : '', size: 6 })],
-              spacing: { after: 0 },
-            }),
-          )
-
-          cells.push(
-            new TableCell({
-              children: cellChildren,
-              width: { size: 50, type: WidthType.PERCENTAGE },
-              borders: {
-                top: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-                bottom: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-                left: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-                right: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-              },
-              shading: cardBgColor ? { type: ShadingType.SOLID, color: 'auto', fill: cardBgColor.replace('#', '') } : undefined,
-            }),
-          )
+          html += `<div class="card">
+  <div class="card-header">
+    <div class="title">${title}</div>
+    <div class="school">${subtitle}</div>
+    <div class="year">${yearLine}</div>
+  </div>
+  <div class="card-body">
+    ${photoHtml}
+    <div class="card-details">
+      <div class="card-name">${student.name}</div>
+      <div class="card-nisn">NISN: ${student.nisn}</div>
+      ${details.map((d) => `<div class="card-detail"><b>${d.label}:</b> ${d.value}</div>`).join('\n      ')}
+    </div>
+  </div>
+  <div class="card-sig">
+    ${sigHtml}
+    <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
+    <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
+  </div>
+</div>\n`
+        } else {
+          // Cell kosong untuk genapkan grid
+          html += `<div class="card" style="border: none; background: transparent;"></div>\n`
         }
       }
-      rows.push(new TableRow({ children: cells }))
+      html += `</div>\n`
     }
 
-    children.push(
-      new Table({
-        rows,
-        width: { size: 100, type: WidthType.PERCENTAGE },
-      }),
-    )
+    html += `</div>\n`
   }
 
-  const doc = new Document({
-    sections: [{ children }],
-  })
+  html += `</body></html>`
 
-  const blob = await Packer.toBlob(doc)
-  downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.docx`)
+  // Download as .doc (Word can open HTML files)
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' })
+  downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.doc`)
 }
 
 /* ------------------------------------------------------------------ */
 /* PDF (.pdf) - 6 kartu per lembar (2 kolom x 3 baris)                 */
-/* Layout: foto di kiri, detail di kanan                               */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
@@ -305,8 +217,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
 
   const totalPages = Math.ceil(students.length / cardsPerPage)
 
-  // Background color
-  const bgColor = cardBgColor ? hexToRgb(cardBgColor) : [255, 255, 255] as [number, number, number]
+  const bgColor = cardBgColor ? hexToRgb(cardBgColor) : [240, 249, 255] as [number, number, number]
 
   for (let page = 0; page < totalPages; page++) {
     if (page > 0) pdf.addPage()
@@ -466,4 +377,9 @@ function downloadBlob(blob: Blob, filename: string): void {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)]
 }

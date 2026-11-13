@@ -138,7 +138,7 @@ export function Cbt() {
       } else {
         await generateExamCardPdf(info)
       }
-      toast(`Kartu ujian berhasil diunduh (${format === 'word' ? 'Word' : 'PDF'}).`, 'success')
+      toast(`Kartu ujian berhasil diunduh (${format === 'word' ? 'Word (.doc)' : 'PDF'}).`, 'success')
       setCardModalOpen(false)
     } catch (e) {
       toast('Gagal membuat kartu ujian.', 'error')
