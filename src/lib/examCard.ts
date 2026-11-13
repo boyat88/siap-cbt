@@ -1,3 +1,4 @@
+import { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from 'docx'
 import { jsPDF } from 'jspdf'
 import type { CbtExam } from '../types'
 import type { Student } from '../types'
@@ -17,7 +18,6 @@ export interface ExamCardInfo {
   includePhoto?: boolean
   cardBgColor?: string
   cardBgImage?: string
-  /** Lokasi cetak (mis. "Cikatomas"). Default: "Cikatomas". */
   printLocation?: string
 }
 
@@ -31,6 +31,37 @@ function formatDateLong(isoDate: string): string {
   const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
   const d = new Date(isoDate)
   return `${dayName(isoDate)}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+}
+
+async function fetchImageBuffer(src: string): Promise<ArrayBuffer | null> {
+  try {
+    // Konversi ke PNG via canvas agar cocok dengan .png di docx.
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    const dataUrl = await new Promise<string | null>((resolve) => {
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = img.naturalWidth || img.width
+          canvas.height = img.naturalHeight || img.height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) { resolve(null); return }
+          ctx.drawImage(img, 0, 0)
+          resolve(canvas.toDataURL('image/png'))
+        } catch { resolve(null) }
+      }
+      img.onerror = () => resolve(null)
+      img.src = src
+    })
+    if (!dataUrl) return null
+    const base64 = dataUrl.split(',')[1]
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    return bytes.buffer
+  } catch {
+    return null
+  }
 }
 
 async function fetchImageDataUrl(src: string): Promise<string | null> {
@@ -51,148 +82,204 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
 }
 
 /* ------------------------------------------------------------------ */
-/* Word (.doc) - HTML table layout, 6 kartu per lembar A4               */
+/* Word (.docx) - 6 kartu per lembar (2 kolom x 3 baris)               */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
-  const printLocation = info.printLocation ?? 'Cikatomas'
-  const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
-  const semesterLine = info.semester ? `Semester ${info.semester}` : ''
-  const bgColor = cardBgColor || '#f0f9ff'
+  const semesterLine = semester ? `Semester ${semester}` : ''
+  const printLocation = info.printLocation ?? 'Cikatomas'
+  const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
 
   const cardsPerPage = 6
   const totalPages = Math.ceil(students.length / cardsPerPage)
 
-  let html = `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta charset="utf-8">
-<title>Kartu Ujian</title>
-<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
-<style>
-  @page { size: 21cm 29.7cm; margin: 8mm; }
-  body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-  .page { page-break-after: always; }
-  .page:last-child { page-break-after: auto; }
-  table.grid { width: 100%; border-collapse: separate; border-spacing: 6mm 6mm; }
-  td.card {
-    width: 50%;
-    border: 3px solid #1e40af;
-    padding: 8px;
-    vertical-align: top;
-    background-color: ${bgColor};
-  }
-  .card-header {
-    text-align: center;
-    background-color: #dbeafe;
-    padding: 4px;
-    margin: -6px -6px 6px -6px;
-    border-bottom: 1px solid #93c5fd;
-  }
-  .card-header .title { font-size: 9pt; font-weight: bold; color: #1e40af; }
-  .card-header .school { font-size: 8pt; font-weight: bold; }
-  .card-header .year { font-size: 7pt; font-style: italic; }
-  .card-photo {
-    width: 40px;
-    height: 50px;
-    background-color: #e5e7eb;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 7pt;
-    color: #9ca3af;
-    float: left;
-    margin-right: 6px;
-    margin-bottom: 4px;
-  }
-  .card-photo img { width: 40px; height: 50px; }
-  .card-name { font-size: 9pt; font-weight: bold; margin-bottom: 2px; text-align: center; }
-  .card-nisn { font-size: 7pt; color: #6b7280; margin-bottom: 4px; text-align: center; }
-  .card-detail { font-size: 7pt; margin-bottom: 1px; }
-  .card-detail b { font-weight: bold; }
-  .card-sig {
-    text-align: center;
-    margin-top: 6px;
-    padding-top: 4px;
-    border-top: 1px solid #d1d5db;
-  }
-  .card-sig img { max-width: 50px; max-height: 20px; }
-  .card-sig .name { font-size: 7pt; font-weight: bold; }
-  .card-sig .nip { font-size: 6pt; color: #6b7280; }
-</style>
-</head>
-<body>
-`
+  const children: (Paragraph | Table)[] = []
 
   for (let page = 0; page < totalPages; page++) {
+    if (page > 0) {
+      children.push(new Paragraph({ pageBreakBefore: true }))
+    }
+
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
 
-    html += `<div class="page"><table class="grid" cellspacing="0" cellpadding="0">\n`
-
+    const rows: TableRow[] = []
     for (let r = 0; r < 3; r++) {
-      html += `<tr>\n`
+      const cells: TableCell[] = []
       for (let c = 0; c < 2; c++) {
         const idx = r * 2 + c
         const student = pageStudents[idx]
         if (student) {
-          const photoHtml = (includePhoto !== false && student.photo)
-            ? `<td style="width:42px; vertical-align:top; padding-right:6px;"><img src="${student.photo}" width="40" height="50" alt="Foto" /></td>`
-            : (includePhoto !== false ? `<td style="width:42px; vertical-align:top; padding-right:6px; background-color:#e5e7eb; text-align:center; font-size:7pt; color:#9ca3af;">[Foto]</td>` : '')
+          const photoBuffer = (includePhoto !== false && student.photo) ? await fetchImageBuffer(student.photo) : null
+          const sigBuffer = headmasterSignature ? await fetchImageBuffer(headmasterSignature) : null
 
+          const cellChildren: (Paragraph | Table)[] = []
+
+          // Header kartu
+          cellChildren.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: title, bold: true, size: 9, color: '1E40AF' })],
+              spacing: { after: 0 },
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: subtitle, bold: true, size: 8 })],
+              spacing: { after: 0 },
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: yearLine, size: 7, italics: true })],
+              spacing: { after: 0 },
+            }),
+          )
+          if (semesterLine) {
+            cellChildren.push(
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [new TextRun({ text: semesterLine, size: 7, italics: true })],
+                spacing: { after: 60 },
+              }),
+            )
+          } else {
+            cellChildren.push(new Paragraph({ text: '', spacing: { after: 60 } }))
+          }
+
+          // Foto + Detail (nested table)
+          const detailChildren: Paragraph[] = []
+          detailChildren.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: student.name, bold: true, size: 9 })],
+              spacing: { after: 20 },
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: `NISN: ${student.nisn}`, size: 7 })],
+              spacing: { after: 40 },
+            }),
+          )
           const details = [
             { label: 'Mapel', value: exam.subject },
             { label: 'Hari/Tgl', value: formatDateLong(examDate) },
             { label: 'Waktu', value: examTime },
             { label: 'Kelas', value: student.classId.replace('k', '') },
           ]
+          for (const d of details) {
+            detailChildren.push(
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `${d.label}:`.padEnd(10, ' '), bold: true, size: 7, font: 'Consolas' }),
+                  new TextRun({ text: ` ${d.value}`, size: 7 }),
+                ],
+                spacing: { after: 2 },
+              }),
+            )
+          }
 
-          const sigHtml = headmasterSignature
-            ? `<img src="${headmasterSignature}" width="50" height="20" alt="TTD" />`
-            : ''
+          const nestedCells: TableCell[] = []
+          if (includePhoto !== false) {
+            const photoChildren: Paragraph[] = []
+            if (photoBuffer) {
+              photoChildren.push(
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [new ImageRun({ data: photoBuffer, transformation: { width: 40, height: 50 } })],
+                }),
+              )
+            } else {
+              photoChildren.push(
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [new TextRun({ text: '[Foto]', size: 7, italics: true, color: '999999' })],
+                }),
+              )
+            }
+            nestedCells.push(
+              new TableCell({
+                children: photoChildren,
+                width: { size: 25, type: WidthType.PERCENTAGE },
+              }),
+            )
+          }
+          nestedCells.push(
+            new TableCell({
+              children: detailChildren,
+              width: { size: includePhoto !== false ? 75 : 100, type: WidthType.PERCENTAGE },
+            }),
+          )
 
-          const detailsHtml = details.map((d) => `<div class="card-detail"><span style="display:inline-block;width:62px;font-weight:bold;text-align:right;padding-right:2px;">${d.label}:</span> ${d.value}</div>`).join('')
+          cellChildren.push(
+            new Table({
+              rows: [new TableRow({ children: nestedCells })],
+              width: { size: 100, type: WidthType.PERCENTAGE },
+            }),
+          )
 
-          html += `<td class="card" style="background-color:${bgColor};">
-  <div class="card-header">
-    <div class="title">${title}</div>
-    <div class="school">${subtitle}</div>
-    <div class="year">${yearLine}</div>
-    ${semesterLine ? `<div class="year">${semesterLine}</div>` : ''}
-  </div>
-  <table cellpadding="0" cellspacing="0" style="width:100%; margin-top:4px;">
-    <tr>
-      ${photoHtml}
-      <td style="vertical-align:top;">
-        <div class="card-name">${student.name}</div>
-        <div class="card-nisn">NISN: ${student.nisn}</div>
-        ${detailsHtml}
-      </td>
-    </tr>
-  </table>
-  <div class="card-sig">
-    <div style="text-align:center; font-size:7pt; margin-bottom:4px;">${printLocation}, ${printDate}</div>
-    ${sigHtml}
-    <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
-    <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
-  </div>
-</td>\n`
-        } else {
-          html += `<td class="card" style="border:none; background:transparent;"></td>\n`
+          // Titimangsa + Tanda tangan
+          cellChildren.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: `${printLocation}, ${printDate}`, size: 7 })],
+              spacing: { before: 60, after: 40 },
+            }),
+          )
+          if (sigBuffer) {
+            cellChildren.push(
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [new ImageRun({ data: sigBuffer, transformation: { width: 50, height: 20 } })],
+                spacing: { after: 10 },
+              }),
+            )
+          }
+          cellChildren.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: headmasterName ?? 'Kepala Sekolah', size: 7, bold: true })],
+              spacing: { after: 0 },
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: headmasterNip ? `NIP. ${headmasterNip}` : '', size: 6 })],
+              spacing: { after: 0 },
+            }),
+          )
+
+          cells.push(
+            new TableCell({
+              children: cellChildren,
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                bottom: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                left: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+                right: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
+              },
+            }),
+          )
         }
       }
-      html += `</tr>\n`
+      rows.push(new TableRow({ children: cells }))
     }
 
-    html += `</table></div>\n`
+    children.push(
+      new Table({
+        rows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      }),
+    )
   }
 
-  html += `</body></html>`
+  const doc = new Document({
+    sections: [{ children }],
+  })
 
-  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' })
-  downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.doc`)
+  const blob = await Packer.toBlob(doc)
+  downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.docx`)
 }
 
 /* ------------------------------------------------------------------ */
@@ -200,13 +287,12 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor } = info
   const printLocation = info.printLocation ?? 'Cikatomas'
-  const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
-  const semesterLine = info.semester ? `Semester ${info.semester}` : ''
+  const semesterLine = semester ? `Semester ${semester}` : ''
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
@@ -235,6 +321,11 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
     pdf.setFontSize(7)
     pdf.setFont('helvetica', 'italic')
     pdf.text(yearLine, pageW / 2, 16, { align: 'center' })
+    if (semesterLine) {
+      pdf.setFontSize(7)
+      pdf.setFont('helvetica', 'italic')
+      pdf.text(semesterLine, pageW / 2, 20, { align: 'center' })
+    }
 
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
 
@@ -243,7 +334,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       const col = i % 2
       const row = Math.floor(i / 2)
       const x = margin + col * (cardW + gap)
-      const y = 20 + row * (cardH + gap)
+      const y = 22 + row * (cardH + gap)
 
       pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2])
       pdf.rect(x, y, cardW, cardH, 'F')
@@ -315,11 +406,11 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(0, 0, 0)
-      pdf.text(student.name, x + cardW / 2, nameY + 3, { align: 'center' })
+      pdf.text(student.name, detailX, nameY + 3, { align: 'left' })
 
       pdf.setFontSize(6.5)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`NISN: ${student.nisn}`, x + cardW / 2, nameY + 7, { align: 'center' })
+      pdf.text(`NISN: ${student.nisn}`, detailX, nameY + 7, { align: 'left' })
 
       let detailY = nameY + 10
       pdf.setFontSize(6.5)
@@ -331,40 +422,40 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       ]
       for (const d of details) {
         pdf.setFont('helvetica', 'bold')
-        // Label rata kanan agar titik dua (:) lurus.
         pdf.text(`${d.label}:`, detailX + 18, detailY, { align: 'right' })
         pdf.setFont('helvetica', 'normal')
         pdf.text(d.value, detailX + 20, detailY)
         detailY += 3.5
       }
 
-      let sigY = y + cardH - 20
-      // Titimangsa
+      const sigY = y + cardH - 20
       pdf.setFontSize(6)
       pdf.setFont('helvetica', 'normal')
       pdf.text(`${printLocation}, ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`, x + cardW / 2, sigY, { align: 'center' })
-      sigY += 4
+
+      let sigCursorY = sigY + 4
       if (headmasterSignature) {
         const dataUrl = await fetchImageDataUrl(headmasterSignature)
         if (dataUrl) {
           try {
-            pdf.addImage(dataUrl, 'PNG', x + (cardW - 28) / 2, sigY, 28, 10)
+            pdf.addImage(dataUrl, 'PNG', x + (cardW - 28) / 2, sigCursorY, 28, 10)
+            sigCursorY += 11
           } catch {
-            // ignore
+            sigCursorY += 2
           }
         }
       }
       pdf.setFontSize(6)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(headmasterName ?? 'Kepala Sekolah', x + cardW / 2, sigY + 12, { align: 'center' })
+      pdf.text(headmasterName ?? 'Kepala Sekolah', x + cardW / 2, sigCursorY + 2, { align: 'center' })
       if (headmasterNip) {
         pdf.setFontSize(5.5)
-        pdf.text(`NIP. ${headmasterNip}`, x + cardW / 2, sigY + 15, { align: 'center' })
+        pdf.text(`NIP. ${headmasterNip}`, x + cardW / 2, sigCursorY + 5, { align: 'center' })
       }
       pdf.setDrawColor(0, 0, 0)
       pdf.setLineWidth(0.2)
       pdf.setLineDashPattern([], 0)
-      pdf.line(x + (cardW - 30) / 2, sigY + 11, x + (cardW + 30) / 2, sigY + 11)
+      pdf.line(x + (cardW - 30) / 2, sigCursorY + 1, x + (cardW + 30) / 2, sigCursorY + 1)
     }
   }
 
