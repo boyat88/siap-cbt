@@ -140,6 +140,7 @@ export function Cbt() {
         schoolName: data.settings.school.name,
         academicYear: data.settings.academicYear,
         semester: data.settings.semester,
+        printLocation: 'Cikatomas',
         headmasterSignature: data.settings.school.headmasterSignature,
         headmasterName: data.settings.school.headmaster,
         headmasterNip: data.settings.school.headmasterNip,

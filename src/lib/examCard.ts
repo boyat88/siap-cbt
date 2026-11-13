@@ -17,6 +17,8 @@ export interface ExamCardInfo {
   includePhoto?: boolean
   cardBgColor?: string
   cardBgImage?: string
+  /** Lokasi cetak (mis. "Cikatomas"). Default: "Cikatomas". */
+  printLocation?: string
 }
 
 function dayName(isoDate: string): string {
@@ -54,6 +56,8 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
+  const printLocation = info.printLocation ?? 'Cikatomas'
+  const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -105,8 +109,8 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
     margin-bottom: 4px;
   }
   .card-photo img { width: 40px; height: 50px; }
-  .card-name { font-size: 9pt; font-weight: bold; margin-bottom: 2px; }
-  .card-nisn { font-size: 7pt; color: #6b7280; margin-bottom: 4px; }
+  .card-name { font-size: 9pt; font-weight: bold; margin-bottom: 2px; text-align: center; }
+  .card-nisn { font-size: 7pt; color: #6b7280; margin-bottom: 4px; text-align: center; }
   .card-detail { font-size: 7pt; margin-bottom: 1px; }
   .card-detail b { font-weight: bold; }
   .card-sig {
@@ -170,6 +174,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
     </tr>
   </table>
   <div class="card-sig">
+    <div style="text-align:right; font-size:7pt; margin-bottom:4px;">${printLocation}, ${printDate}</div>
     ${sigHtml}
     <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
     <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
@@ -197,6 +202,8 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
 
 export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
   const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto, cardBgColor, cardBgImage } = info
+  const printLocation = info.printLocation ?? 'Cikatomas'
+  const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -309,11 +316,11 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(0, 0, 0)
-      pdf.text(student.name, detailX, nameY + 3, { align: 'left' })
+      pdf.text(student.name, x + cardW / 2, nameY + 3, { align: 'center' })
 
       pdf.setFontSize(6.5)
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`NISN: ${student.nisn}`, detailX, nameY + 7, { align: 'left' })
+      pdf.text(`NISN: ${student.nisn}`, x + cardW / 2, nameY + 7, { align: 'center' })
 
       let detailY = nameY + 10
       pdf.setFontSize(6.5)
@@ -332,7 +339,12 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
         detailY += 3.5
       }
 
-      const sigY = y + cardH - 16
+      let sigY = y + cardH - 20
+      // Titimangsa
+      pdf.setFontSize(6)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`${printLocation}, ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`, x + cardW - 3, sigY, { align: 'right' })
+      sigY += 4
       if (headmasterSignature) {
         const dataUrl = await fetchImageDataUrl(headmasterSignature)
         if (dataUrl) {
