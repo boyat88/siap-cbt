@@ -54,7 +54,7 @@ function formatDateLong(isoDate: string): string {
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterName, headmasterNip, includePhoto } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -87,6 +87,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   .sig { text-align: center; margin-top: 6px; padding-top: 4px; border-top: 1px solid #d1d5db; }
   .sig .name { font-size: 7pt; font-weight: bold; }
   .sig .nip { font-size: 6pt; color: #6b7280; }
+  .sig img { max-width: 60px; max-height: 25px; display: block; margin: 4px auto 2px auto; }
   .titimangsa { text-align: center; font-size: 7pt; margin-bottom: 4px; }
 </style>
 </head>
@@ -120,9 +121,17 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   </div>
   <div class="name">${student.name}</div>
   <div class="nisn">NISN: ${student.nisn}</div>
-  ${details.map((d) => `<div class="detail"><b>${d.label}:</b> ${d.value}</div>`).join('')}
+  <table cellpadding="0" cellspacing="0" style="width:100%; margin-top:4px;">
+    <tr>
+      ${includePhoto !== false && student.photo ? `<td style="width:45px; vertical-align:top; padding-right:6px;"><img src="${student.photo}" width="42" height="52" alt="Foto" style="border:1px solid #ccc;" /></td>` : (includePhoto !== false ? `<td style="width:45px; vertical-align:top; padding-right:6px; background-color:#e5e7eb; text-align:center; font-size:7pt; color:#9ca3af; height:52px;">[Foto]</td>` : '')}
+      <td style="vertical-align:top;">
+        ${details.map((d) => `<div class="detail"><b>${d.label}:</b> ${d.value}</div>`).join('')}
+      </td>
+    </tr>
+  </table>
   <div class="sig">
     <div class="titimangsa">${printLocation}, ${printDate}</div>
+    ${headmasterSignature ? `<img src="${headmasterSignature}" width="60" height="25" alt="TTD" style="margin:4px auto; display:block;" />` : ''}
     <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
     <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
   </div>
