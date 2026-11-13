@@ -1,4 +1,3 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from 'docx'
 import { jsPDF } from 'jspdf'
 import type { CbtExam } from '../types'
 import type { Student } from '../types'
@@ -21,48 +20,6 @@ export interface ExamCardInfo {
   printLocation?: string
 }
 
-function dayName(isoDate: string): string {
-  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-  const d = new Date(isoDate)
-  return days[d.getDay()] ?? ''
-}
-
-function formatDateLong(isoDate: string): string {
-  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
-  const d = new Date(isoDate)
-  return `${dayName(isoDate)}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
-}
-
-async function fetchImageBuffer(src: string): Promise<ArrayBuffer | null> {
-  try {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    const dataUrl = await new Promise<string | null>((resolve) => {
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas')
-          canvas.width = img.naturalWidth || img.width
-          canvas.height = img.naturalHeight || img.height
-          const ctx = canvas.getContext('2d')
-          if (!ctx) { resolve(null); return }
-          ctx.drawImage(img, 0, 0)
-          resolve(canvas.toDataURL('image/png'))
-        } catch { resolve(null) }
-      }
-      img.onerror = () => resolve(null)
-      img.src = src
-    })
-    if (!dataUrl) return null
-    const base64 = dataUrl.split(',')[1]
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-    return bytes.buffer
-  } catch {
-    return null
-  }
-}
-
 async function fetchImageDataUrl(src: string): Promise<string | null> {
   try {
     if (src.startsWith('data:')) return src
@@ -80,12 +37,24 @@ async function fetchImageDataUrl(src: string): Promise<string | null> {
   }
 }
 
+function dayName(isoDate: string): string {
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const d = new Date(isoDate)
+  return days[d.getDay()] ?? ''
+}
+
+function formatDateLong(isoDate: string): string {
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const d = new Date(isoDate)
+  return `${dayName(isoDate)}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+}
+
 /* ------------------------------------------------------------------ */
-/* Word (.docx) - 6 kartu per lembar (2 kolom x 3 baris)               */
+/* Word (.doc) - HTML sederhana yang Word bisa buka                    */
 /* ------------------------------------------------------------------ */
 
 export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
-  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterSignature, headmasterName, headmasterNip, includePhoto } = info
+  const { exam, students, examDate, examTime, examType, schoolName, academicYear, semester, headmasterName, headmasterNip, includePhoto } = info
   const title = `SUMATIF AKHIR SEMESTER (${examType})`
   const subtitle = schoolName
   const yearLine = `Tahun Ajaran ${academicYear}`
@@ -96,151 +65,82 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   const cardsPerPage = 6
   const totalPages = Math.ceil(students.length / cardsPerPage)
 
-  const children: (Paragraph | Table)[] = []
+  let html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Kartu Ujian</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 8mm; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  table.grid { width: 100%; border-collapse: separate; border-spacing: 4mm; }
+  td.card { width: 50%; border: 2px solid #3b82f6; padding: 6px; vertical-align: top; background-color: #f0f9ff; }
+  .header { text-align: center; background-color: #dbeafe; padding: 4px; margin: -6px -6px 6px -6px; }
+  .header .title { font-size: 9pt; font-weight: bold; color: #1e40af; }
+  .header .school { font-size: 8pt; font-weight: bold; }
+  .header .year { font-size: 7pt; font-style: italic; }
+  .name { font-size: 9pt; font-weight: bold; text-align: center; margin-bottom: 2px; }
+  .nisn { font-size: 7pt; text-align: center; color: #6b7280; margin-bottom: 4px; }
+  .detail { font-size: 7pt; margin-bottom: 1px; }
+  .detail b { font-weight: bold; }
+  .sig { text-align: center; margin-top: 6px; padding-top: 4px; border-top: 1px solid #d1d5db; }
+  .sig .name { font-size: 7pt; font-weight: bold; }
+  .sig .nip { font-size: 6pt; color: #6b7280; }
+  .titimangsa { text-align: center; font-size: 7pt; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+`
 
   for (let page = 0; page < totalPages; page++) {
-    if (page > 0) {
-      children.push(new Paragraph({ pageBreakBefore: true }))
-    }
-
     const pageStudents = students.slice(page * cardsPerPage, (page + 1) * cardsPerPage)
 
-    const rows: TableRow[] = []
+    html += `<div class="page"><table class="grid">\n`
+
     for (let r = 0; r < 3; r++) {
-      const cells: TableCell[] = []
+      html += `<tr>\n`
       for (let c = 0; c < 2; c++) {
         const idx = r * 2 + c
         const student = pageStudents[idx]
         if (student) {
-          const photoBuffer = (includePhoto !== false && student.photo) ? await fetchImageBuffer(student.photo) : null
-          const sigBuffer = headmasterSignature ? await fetchImageBuffer(headmasterSignature) : null
-
-          const cellChildren: (Paragraph | Table)[] = []
-
-          // Header
-          cellChildren.push(
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: title, bold: true, size: 9, color: '1E40AF' })],
-              spacing: { after: 0 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: subtitle, bold: true, size: 8 })],
-              spacing: { after: 0 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: yearLine, size: 7, italics: true })],
-              spacing: { after: 0 },
-            }),
-          )
-          if (semesterLine) {
-            cellChildren.push(
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: semesterLine, size: 7, italics: true })],
-                spacing: { after: 60 },
-              }),
-            )
-          } else {
-            cellChildren.push(new Paragraph({ text: '', spacing: { after: 60 } }))
-          }
-
-          // Nama siswa
-          cellChildren.push(
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: student.name, bold: true, size: 9 })],
-              spacing: { after: 20 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: `NISN: ${student.nisn}`, size: 7 })],
-              spacing: { after: 40 },
-            }),
-          )
-
-          // Detail ujian
           const details = [
             { label: 'Mapel', value: exam.subject },
             { label: 'Hari/Tgl', value: formatDateLong(examDate) },
             { label: 'Waktu', value: examTime },
             { label: 'Kelas', value: student.classId.replace('k', '') },
           ]
-          for (const d of details) {
-            cellChildren.push(
-              new Paragraph({
-                children: [
-                  new TextRun({ text: `${d.label}:`.padEnd(10, ' '), bold: true, size: 7, font: 'Consolas' }),
-                  new TextRun({ text: ` ${d.value}`, size: 7 }),
-                ],
-                spacing: { after: 2 },
-              }),
-            )
-          }
 
-          // Titimangsa + Tanda tangan
-          cellChildren.push(
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: `${printLocation}, ${printDate}`, size: 7 })],
-              spacing: { before: 60, after: 40 },
-            }),
-          )
-          if (sigBuffer) {
-            cellChildren.push(
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new ImageRun({ data: sigBuffer, transformation: { width: 50, height: 20 } })],
-                spacing: { after: 10 },
-              }),
-            )
-          }
-          cellChildren.push(
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: headmasterName ?? 'Kepala Sekolah', size: 7, bold: true })],
-              spacing: { after: 0 },
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [new TextRun({ text: headmasterNip ? `NIP. ${headmasterNip}` : '', size: 6 })],
-              spacing: { after: 0 },
-            }),
-          )
-
-          cells.push(
-            new TableCell({
-              children: cellChildren,
-              width: { size: 50, type: WidthType.PERCENTAGE },
-              borders: {
-                top: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-                bottom: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-                left: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-                right: { style: BorderStyle.SINGLE, size: 4, color: '3b82f6' },
-              },
-            }),
-          )
+          html += `<td class="card">
+  <div class="header">
+    <div class="title">${title}</div>
+    <div class="school">${subtitle}</div>
+    <div class="year">${yearLine}</div>
+    ${semesterLine ? `<div class="year">${semesterLine}</div>` : ''}
+  </div>
+  <div class="name">${student.name}</div>
+  <div class="nisn">NISN: ${student.nisn}</div>
+  ${details.map((d) => `<div class="detail"><b>${d.label}:</b> ${d.value}</div>`).join('')}
+  <div class="sig">
+    <div class="titimangsa">${printLocation}, ${printDate}</div>
+    <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
+    <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
+  </div>
+</td>\n`
+        } else {
+          html += `<td class="card" style="border:none; background:transparent;"></td>\n`
         }
       }
-      rows.push(new TableRow({ children: cells }))
+      html += `</tr>\n`
     }
 
-    children.push(
-      new Table({
-        rows,
-        width: { size: 100, type: WidthType.PERCENTAGE },
-      }),
-    )
+    html += `</table></div>\n`
   }
 
-  const doc = new Document({
-    sections: [{ children }],
-  })
+  html += `</body></html>`
 
-  const blob = await Packer.toBlob(doc)
-  downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.docx`)
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' })
+  downloadBlob(blob, `Kartu_Ujian_${exam.subject}_${examType}.doc`)
 }
 
 /* ------------------------------------------------------------------ */
