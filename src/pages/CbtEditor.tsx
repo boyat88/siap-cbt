@@ -352,7 +352,7 @@ export function CbtEditor() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3 items-start" style={{ overflow: 'visible' }}>
         {/* Pengaturan ujian */}
         <div className="space-y-4">
           <Card>
