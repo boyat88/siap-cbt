@@ -133,8 +133,9 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   </table>
   <div class="sig">
     <div class="titimangsa">${printLocation}, ${printDate}</div>
+    <div style="font-size:7pt; margin-bottom:4px;">Kepala Sekolah</div>
     ${headmasterSignature ? `<img src="${headmasterSignature}" width="60" height="25" alt="TTD" style="margin:4px auto; display:block;" />` : ''}
-    <div class="name">${headmasterName ?? 'Kepala Sekolah'}</div>
+    <div class="name">${headmasterName ?? ''}</div>
     <div class="nip">${headmasterNip ? `NIP. ${headmasterNip}` : ''}</div>
   </div>
 </td>\n`
@@ -295,7 +296,11 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
       pdf.setFont('helvetica', 'normal')
       pdf.text(`${printLocation}, ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`, x + cardW / 2, sigY, { align: 'center' })
 
-      let sigCursorY = sigY + 4
+      pdf.setFontSize(6)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text('Kepala Sekolah', x + cardW / 2, sigY + 4, { align: 'center' })
+
+      let sigCursorY = sigY + 8
       if (headmasterSignature) {
         const dataUrl = await fetchImageDataUrl(headmasterSignature)
         if (dataUrl) {
