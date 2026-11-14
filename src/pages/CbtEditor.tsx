@@ -501,7 +501,7 @@ export function CbtEditor() {
         </div>
 
         {/* Bank soal */}
-        <div className="space-y-4 xl:col-span-2">
+        <div className="space-y-4 xl:col-span-2 xl:sticky xl:top-4 xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto xl:pr-2">
           <Card>
             <CardHeader
               title={
