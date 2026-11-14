@@ -25,6 +25,10 @@ export interface AppTheme {
   glass: number
   /** Kekuatan blur kaca dalam px (0-30). */
   blur: number
+  /** Kecerahan latar belakang (0-200 persen, 100 = normal). */
+  bgBrightness: number
+  /** Kekuatan blur latar belakang dalam px (0-20). */
+  bgBlur: number
   /** id latar belakang yang dipilih. */
   background: string
   /** Foto latar belakang (data URL) bila pengguna mengunggah sendiri. */
@@ -198,6 +202,8 @@ export const defaultTheme: AppTheme = {
   colorId: 'biru',
   glass: 40,
   blur: 20,
+  bgBrightness: 100,
+  bgBlur: 0,
   background: defaultBackground,
   mode: 'default',
 }
@@ -426,6 +432,8 @@ export function applyTheme(theme: AppTheme): void {
   const glass = clamp(theme.glass, 0, 70)
   root.style.setProperty('--surface-alpha', String((100 - glass) / 100))
   root.style.setProperty('--glass-blur', `${clamp(theme.blur, 0, 30)}px`)
+  root.style.setProperty('--bg-brightness', `${clamp(theme.bgBrightness ?? 100, 0, 200)}%`)
+  root.style.setProperty('--bg-blur', `${clamp(theme.bgBlur ?? 0, 0, 20)}px`)
   root.dataset.glass = glass > 0 ? 'on' : 'off'
   root.dataset.themeMode = theme.mode || 'default'
   if (theme.headerColor) root.style.setProperty('--header-bg', theme.headerColor)
@@ -503,6 +511,8 @@ function parseStoredTheme(raw: string | null): AppTheme | null {
       colorId: typeof parsed.colorId === 'string' ? parsed.colorId : 'custom',
       glass: typeof parsed.glass === 'number' ? clamp(parsed.glass, 0, 70) : defaultTheme.glass,
       blur: typeof parsed.blur === 'number' ? clamp(parsed.blur, 0, 30) : defaultTheme.blur,
+  bgBrightness: typeof parsed.bgBrightness === 'number' ? clamp(parsed.bgBrightness, 0, 200) : defaultTheme.bgBrightness,
+  bgBlur: typeof parsed.bgBlur === 'number' ? clamp(parsed.bgBlur, 0, 20) : defaultTheme.bgBlur,
       background: typeof parsed.background === 'string' ? parsed.background : defaultTheme.background,
       backgroundImage:
         typeof parsed.backgroundImage === 'string' && parsed.backgroundImage.startsWith('data:image/')

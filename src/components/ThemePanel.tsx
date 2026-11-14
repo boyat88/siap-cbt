@@ -18,11 +18,11 @@ export function ThemePanel() {
   const { theme, updateTheme, setColor, resetTheme, panelOpen, setPanelOpen, scopedToAccount } = useTheme()
   const toast = useToast()
   const applyMode = (mode: AppTheme['mode']) => {
-    if (mode === 'terang') updateTheme({ mode, background: 'aurora', glass: 14, blur: 14 })
-    else if (mode === 'gelap') updateTheme({ mode, background: 'midnight', glass: 20, blur: 14 })
-    else if (mode === 'semi') updateTheme({ mode, glass: 40, blur: 20 })
-    else if (mode === 'minim') updateTheme({ mode, glass: 0, blur: 0 })
-    else updateTheme({ mode: 'default', background: 'aurora', glass: 14, blur: 14 })
+    if (mode === 'terang') updateTheme({ mode, background: 'aurora', glass: 14, blur: 14, bgBrightness: 100, bgBlur: 0 })
+    else if (mode === 'gelap') updateTheme({ mode, background: 'midnight', glass: 20, blur: 14, bgBrightness: 90, bgBlur: 2 })
+    else if (mode === 'semi') updateTheme({ mode, glass: 40, blur: 20, bgBrightness: 100, bgBlur: 0 })
+    else if (mode === 'minim') updateTheme({ mode, glass: 0, blur: 0, bgBrightness: 100, bgBlur: 0 })
+    else updateTheme({ mode: 'default', background: 'aurora', glass: 14, blur: 14, bgBrightness: 100, bgBlur: 0 })
   }
   const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -268,6 +268,40 @@ export function ThemePanel() {
                 aria-label="Kekuatan blur kaca"
               />
               <span className="w-8 text-right text-[10px] font-semibold text-slate-500">{theme.blur}px</span>
+            </div>
+          </div>
+
+          <div className="mt-2.5 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+            <span className="text-[11px] font-semibold text-slate-600">Kecerahan Latar</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={0}
+                max={200}
+                step={5}
+                value={theme.bgBrightness ?? 100}
+                onChange={(event) => updateTheme({ bgBrightness: Number(event.target.value) })}
+                className="theme-range w-24"
+                aria-label="Kecerahan latar belakang"
+              />
+              <span className="w-10 text-right text-[10px] font-semibold text-slate-500">{theme.bgBrightness ?? 100}%</span>
+            </div>
+          </div>
+
+          <div className="mt-2.5 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+            <span className="text-[11px] font-semibold text-slate-600">Blur Latar</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={0}
+                max={20}
+                step={1}
+                value={theme.bgBlur ?? 0}
+                onChange={(event) => updateTheme({ bgBlur: Number(event.target.value) })}
+                className="theme-range w-24"
+                aria-label="Blur latar belakang"
+              />
+              <span className="w-8 text-right text-[10px] font-semibold text-slate-500">{theme.bgBlur ?? 0}px</span>
             </div>
           </div>
         </section>

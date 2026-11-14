@@ -90,7 +90,8 @@ body::before {
   background-size: var(--app-bg-size);
   background-position: var(--app-bg-position);
   background-repeat: var(--app-bg-repeat);
-  transition: background-image 0.5s ease;
+  filter: brightness(var(--bg-brightness, 100%)) blur(var(--bg-blur, 0px));
+  transition: background-image 0.5s ease, filter 0.3s ease;
 }
 
 /* Grid halus untuk memberi kesan premium tanpa mengganggu keterbacaan. */
