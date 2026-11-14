@@ -100,11 +100,15 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 function migrateSettingsFormat(data: AppData): AppData {
+  // Migrasi logo aplikasi ke logo baru.
+  const currentLogo = data.settings?.appLogo
+  const newLogo = currentLogo === '/images/app-logo.png' ? '/images/Logo_Satap2.png' : currentLogo
   return {
     ...data,
     settings: {
       ...data.settings,
       holidays: Array.isArray(data.settings?.holidays) ? data.settings.holidays : [],
+      appLogo: newLogo,
     },
     teachingSchedules: Array.isArray(data.teachingSchedules) ? data.teachingSchedules : [],
   }

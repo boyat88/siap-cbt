@@ -201,6 +201,6 @@ export const defaultSettings: Settings = {
   lateTolerance: 10,
   notifyGuardian: true,
   weeklyReport: true,
-  appLogo: '/images/app-logo.png',
+  appLogo: '/images/Logo_Satap2.png',
   holidays: [],
 }
