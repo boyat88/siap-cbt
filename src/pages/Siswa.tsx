@@ -305,7 +305,7 @@ export function Siswa() {
               setPage(1)
             }}
             placeholder="Cari nama, NISN, wali..."
-            className="w-full sm:w-64"
+            className="w-full sm:flex-1 sm:min-w-[200px]"
           />
           <Select
             value={classFilter}
@@ -313,7 +313,7 @@ export function Siswa() {
               setClassFilter(e.target.value)
               setPage(1)
             }}
-            className="w-[calc(50%-4px)] sm:w-36"
+            className="w-full sm:w-40"
             options={[{ value: 'all', label: 'Semua Kelas' }, ...data.classes.map((c) => ({ value: c.id, label: `Kelas ${c.name}` }))]}
           />
           <Select
@@ -322,7 +322,7 @@ export function Siswa() {
               setGenderFilter(e.target.value)
               setPage(1)
             }}
-            className="w-[calc(50%-4px)] sm:w-32"
+            className="w-full sm:w-36"
             options={[
               { value: 'all', label: 'Semua Gender' },
               { value: 'L', label: 'Laki-laki' },

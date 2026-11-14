@@ -315,7 +315,7 @@ export function Guru() {
               setPage(1)
             }}
             placeholder="Cari nama, NIP, mata pelajaran..."
-            className="w-full sm:w-72"
+            className="w-full sm:flex-1 sm:min-w-[200px]"
           />
           <Select
             value={subjectFilter}
@@ -323,7 +323,7 @@ export function Guru() {
               setSubjectFilter(e.target.value)
               setPage(1)
             }}
-            className="w-[calc(50%-4px)] sm:w-48"
+            className="w-full sm:w-48"
             options={[{ value: 'all', label: 'Semua Mapel' }, ...SUBJECTS.map((s) => ({ value: s, label: s }))]}
           />
           <Select
@@ -332,7 +332,7 @@ export function Guru() {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
-            className="w-[calc(50%-4px)] sm:w-32"
+            className="w-full sm:w-36"
             options={[
               { value: 'all', label: 'Semua Status' },
               { value: 'aktif', label: 'Aktif' },
