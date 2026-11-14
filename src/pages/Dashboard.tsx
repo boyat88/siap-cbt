@@ -306,7 +306,7 @@ export function Dashboard() {
               {greeting()}, {user?.name.split(' ')[0]} 👋
             </h1>
             <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-white/75">
-              Berikut ringkasan kehadiran peserta didik {isToday ? 'hari ini' : `pada ${formatDate(activeDate, 'long')}`}.
+              Berikut ringkasan kehadiran peserta didik hari ini, {formatDate(today, 'long')}.
               Pantau tren, kelas, dan peserta didik yang perlu perhatian dalam satu tampilan.
             </p>
 
