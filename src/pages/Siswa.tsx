@@ -297,7 +297,7 @@ export function Siswa() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3.5 sm:px-5">
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-100 px-4 py-3.5 sm:px-5">
           <SearchInput
             value={query}
             onChange={(v) => {
@@ -305,7 +305,7 @@ export function Siswa() {
               setPage(1)
             }}
             placeholder="Cari nama, NISN, wali..."
-            className="w-full sm:flex-1 sm:min-w-[200px]"
+            className="min-w-[160px] flex-1"
           />
           <Select
             value={classFilter}
