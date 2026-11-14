@@ -280,7 +280,7 @@ export function Dashboard() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-md">
                 <Sparkles size={11} />
-                {formatDate(activeDate, 'full')}
+                {formatDate(today, 'full')}
               </span>
               <span
                 className={cn(
