@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  Calendar,
   Check,
   Download,
   Eye,
@@ -38,7 +39,7 @@ import { ImportModal, type ImportValidation } from '../components/ImportModal'
 import { PhotoPicker } from '../components/PhotoPicker'
 import { cellNumber, cellText, exportExcel, normalizeActiveStatus, normalizeGender, normalizeKey, pick } from '../lib/excel'
 import { SUBJECTS } from '../lib/constants'
-import type { Gender, Teacher } from '../types'
+import type { Gender, Teacher, TeachingSchedule } from '../types'
 
 const emptyTeacher: Omit<Teacher, 'id'> = {
   name: '',
@@ -53,7 +54,7 @@ const emptyTeacher: Omit<Teacher, 'id'> = {
 }
 
 export function Guru() {
-  const { data, addTeacher, updateTeacher, deleteTeacher } = useApp()
+  const { data, addTeacher, updateTeacher, deleteTeacher, addTeachingSchedule, updateTeachingSchedule, deleteTeachingSchedule } = useApp()
   const toast = useToast()
   const [query, setQuery] = useState('')
   const [subjectFilter, setSubjectFilter] = useState('all')
@@ -67,6 +68,11 @@ export function Guru() {
   const [showPassword, setShowPassword] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  // State untuk jadwal mengajar guru yang sedang diedit.
+  const [scheduleDay, setScheduleDay] = useState('Senin')
+  const [scheduleSubject, setScheduleSubject] = useState(SUBJECTS[0])
+  const [scheduleClasses, setScheduleClasses] = useState<string[]>([])
+  const [scheduleError, setScheduleError] = useState('')
 
   const filtered = useMemo(() => {
     return data.teachers.filter((teacher) => {
@@ -100,6 +106,10 @@ export function Guru() {
     setForm({ ...emptyTeacher })
     setErrors({})
     setShowPassword(false)
+    setScheduleDay('Senin')
+    setScheduleSubject(SUBJECTS[0])
+    setScheduleClasses([])
+    setScheduleError('')
     setModalOpen(true)
   }
 
@@ -109,6 +119,10 @@ export function Guru() {
     setForm(rest)
     setErrors({})
     setShowPassword(false)
+    setScheduleDay('Senin')
+    setScheduleSubject(teacher.subjects[0] ?? SUBJECTS[0])
+    setScheduleClasses([])
+    setScheduleError('')
     setModalOpen(true)
   }
 
@@ -541,6 +555,127 @@ export function Guru() {
               <p className="mt-1 text-[11px] font-medium text-rose-600">{errors.subjects}</p>
             )}
           </div>
+          {/* Jadwal Mengajar */}
+          {editing && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-brand-600" />
+                <p className="text-sm font-bold text-navy-950">Jadwal Mengajar</p>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Atur jadwal mengajar guru ini: hari, mata pelajaran, dan kelas yang diampu.
+              </p>
+
+              {/* Daftar jadwal yang sudah ada */}
+              <div className="mt-3 space-y-2">
+                {(data.teachingSchedules ?? []).filter((s) => s.teacherId === editing.id).length === 0 && (
+                  <p className="text-[11px] italic text-slate-400">Belum ada jadwal mengajar.</p>
+                )}
+                {(data.teachingSchedules ?? [])
+                  .filter((s) => s.teacherId === editing.id)
+                  .map((sched) => (
+                    <div
+                      key={sched.id}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                        <Badge tone="brand">{sched.day}</Badge>
+                        <span className="font-semibold text-navy-950">{sched.subject}</span>
+                        <span className="text-slate-400">→</span>
+                        {sched.classIds.map((cid) => {
+                          const clazz = data.classes.find((c) => c.id === cid)
+                          return (
+                            <Badge key={cid} tone="navy">
+                              Kelas {clazz?.name ?? cid}
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteTeachingSchedule(sched.id)}
+                        className="rounded-lg p-1 text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        aria-label="Hapus jadwal"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Form tambah jadwal */}
+              <div className="mt-4 space-y-3 border-t border-slate-200 pt-3">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Select
+                    label="Hari"
+                    value={scheduleDay}
+                    onChange={(e) => setScheduleDay(e.target.value)}
+                    options={['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map((d) => ({ value: d, label: d }))}
+                  />
+                  <Select
+                    label="Mata Pelajaran"
+                    value={scheduleSubject}
+                    onChange={(e) => setScheduleSubject(e.target.value)}
+                    options={SUBJECTS.map((s) => ({ value: s, label: s }))}
+                  />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">Kelas</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.classes.map((clazz) => {
+                        const selected = scheduleClasses.includes(clazz.id)
+                        return (
+                          <button
+                            key={clazz.id}
+                            type="button"
+                            onClick={() =>
+                              setScheduleClasses((prev) =>
+                                selected ? prev.filter((id) => id !== clazz.id) : [...prev, clazz.id],
+                              )
+                            }
+                            className={cn(
+                              'rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                              selected
+                                ? 'border-brand-400 bg-brand-50 text-brand-700'
+                                : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+                            )}
+                          >
+                            {clazz.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+                {scheduleError && (
+                  <p className="text-[11px] font-medium text-rose-600">{scheduleError}</p>
+                )}
+                <Button
+                  variant="soft"
+                  size="sm"
+                  onClick={() => {
+                    if (scheduleClasses.length === 0) {
+                      setScheduleError('Pilih minimal satu kelas.')
+                      return
+                    }
+                    setScheduleError('')
+                    addTeachingSchedule({
+                      id: `ts_${Date.now()}`,
+                      teacherId: editing.id,
+                      subject: scheduleSubject,
+                      day: scheduleDay as TeachingSchedule['day'],
+                      classIds: scheduleClasses,
+                    })
+                    setScheduleClasses([])
+                    toast('Jadwal mengajar berhasil ditambahkan.', 'success')
+                  }}
+                >
+                  <Plus size={13} />
+                  Tambah Jadwal
+                </Button>
+              </div>
+            </div>
+          )}
+
           <Select
             label="Status"
             value={form.status}

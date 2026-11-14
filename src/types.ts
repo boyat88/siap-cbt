@@ -109,6 +109,14 @@ export interface Settings {
   holidays?: { date: string; name: string }[]
 }
 
+export interface TeachingSchedule {
+  id: string
+  teacherId: string
+  subject: string
+  day: 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu'
+  classIds: string[]
+}
+
 export interface AppData {
   students: Student[]
   teachers: Teacher[]
@@ -116,6 +124,7 @@ export interface AppData {
   sessions: AttendanceSession[]
   notifications: AppNotification[]
   settings: Settings
+  teachingSchedules: TeachingSchedule[]
 }
 
 /* ------------------------------------------------------------------ */

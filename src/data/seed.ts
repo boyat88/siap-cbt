@@ -189,6 +189,7 @@ function buildSeed(): AppData {
     sessions,
     notifications,
     settings: JSON.parse(JSON.stringify(defaultSettings)),
+  teachingSchedules: [],
   }
 }
 

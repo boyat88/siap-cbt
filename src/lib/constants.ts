@@ -2,6 +2,7 @@ export const SUBJECTS = [
   'Matematika',
   'Bahasa Indonesia',
   'Bahasa Inggris',
+  'Bahasa Sunda',
   'Ilmu Pengetahuan Alam',
   'Ilmu Pengetahuan Sosial',
   'Pendidikan Pancasila',
@@ -10,6 +11,7 @@ export const SUBJECTS = [
   'PJOK',
   'Informatika',
   'Prakarya',
+  'Ko Kurikuler',
 ]
 
 export const STATUS_ORDER = ['hadir', 'terlambat', 'izin', 'sakit', 'alpa'] as const

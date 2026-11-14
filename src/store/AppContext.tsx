@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { AppData, AppNotification, AttendanceSession, ClassRoom, Settings, Student, Teacher, User } from '../types'
+import type { AppData, AppNotification, AttendanceSession, ClassRoom, Settings, Student, Teacher, TeachingSchedule, User } from '../types'
 import { demoAccounts, demoTeacherAccount, seedData } from '../data/seed'
 import { LOCKED_MENUS } from '../lib/navigation'
 import { teacherSubjects, type LegacyTeacher } from '../lib/teacher'
@@ -77,6 +77,9 @@ interface AppContextValue {
   addClass: (clazz: ClassRoom) => void
   updateClass: (clazz: ClassRoom) => void
   deleteClass: (id: string) => void
+  addTeachingSchedule: (schedule: TeachingSchedule) => void
+  updateTeachingSchedule: (schedule: TeachingSchedule) => void
+  deleteTeachingSchedule: (id: string) => void
   addNotification: (notification: AppNotification) => void
   markRead: (id: string) => void
   markAllRead: () => void
@@ -103,6 +106,7 @@ function migrateSettingsFormat(data: AppData): AppData {
       ...data.settings,
       holidays: Array.isArray(data.settings?.holidays) ? data.settings.holidays : [],
     },
+    teachingSchedules: Array.isArray(data.teachingSchedules) ? data.teachingSchedules : [],
   }
 }
 
@@ -365,6 +369,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           classes: migrated.classes,
           notifications: migrated.notifications,
           settings: migrated.settings,
+          teachingSchedules: migrated.teachingSchedules ?? [],
         }))
       }
       if (state.profiles && typeof state.profiles === 'object') {
@@ -522,6 +527,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({ ...prev, classes: prev.classes.filter((c) => c.id !== id) }))
   }, [])
 
+  const addTeachingSchedule = useCallback((schedule: TeachingSchedule) => {
+    setData((prev) => ({ ...prev, teachingSchedules: [schedule, ...(prev.teachingSchedules ?? [])] }))
+  }, [])
+
+  const updateTeachingSchedule = useCallback((schedule: TeachingSchedule) => {
+    setData((prev) => ({
+      ...prev,
+      teachingSchedules: (prev.teachingSchedules ?? []).map((s) => (s.id === schedule.id ? schedule : s)),
+    }))
+  }, [])
+
+  const deleteTeachingSchedule = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      teachingSchedules: (prev.teachingSchedules ?? []).filter((s) => s.id !== id),
+    }))
+  }, [])
+
   const addNotification = useCallback((notification: AppNotification) => {
     setData((prev) => ({ ...prev, notifications: [notification, ...prev.notifications] }))
   }, [])
@@ -612,6 +635,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetData,
       restoreData,
       clearPeopleData,
+      addTeachingSchedule,
+      updateTeachingSchedule,
+      deleteTeachingSchedule,
     }),
     [
       data,
@@ -645,6 +671,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetData,
       restoreData,
       clearPeopleData,
+      addTeachingSchedule,
+      updateTeachingSchedule,
+      deleteTeachingSchedule,
     ],
   )
 
