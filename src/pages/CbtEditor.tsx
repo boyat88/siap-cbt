@@ -352,9 +352,9 @@ export function CbtEditor() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-3 items-start" style={{ overflow: 'visible' }}>
+      <div className="grid gap-4 xl:grid-cols-3 items-start">
         {/* Pengaturan ujian */}
-        <div className="space-y-4">
+        <div className="space-y-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto xl:pr-2">
           <Card>
             <CardHeader title="Identitas Ujian" description="Informasi dasar ujian" />
             <div className="space-y-4 px-5 py-4">
