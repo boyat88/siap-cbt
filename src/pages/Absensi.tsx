@@ -61,7 +61,9 @@ export function Absensi() {
   const [classId, setClassId] = useState(searchParams.get('class') || data.classes[0]?.id || '')
   const [subject, setSubject] = useState('')
   const [note, setNote] = useState('')
-  const defaultTeacher = data.teachers.find((t) => t.name === user?.name) || data.teachers[0]
+  const defaultTeacher = user?.role === 'guru'
+    ? data.teachers.find((t) => t.name === user?.name || t.email.toLowerCase() === user?.email?.toLowerCase())
+    : (data.teachers[0] ?? null)
   const [teacherId, setTeacherId] = useState(defaultTeacher?.id || '')
   const [records, setRecords] = useState<Record<string, AttendanceStatus>>({})
   const [recordNotes, setRecordNotes] = useState<Record<string, string>>({})
@@ -69,17 +71,60 @@ export function Absensi() {
   const [studentQuery, setStudentQuery] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Konversi tanggal ISO ke nama hari (Senin, Selasa, ...).
+  const dayNameFromDate = (isoDate: string): string => {
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+    const d = new Date(isoDate)
+    return days[d.getDay()] ?? ''
+  }
+
+  // Guru yang sedang login.
+  const currentTeacher = useMemo(() => {
+    if (user?.role !== 'guru') return null
+    return data.teachers.find(
+      (item) => item.email.toLowerCase() === user.email.toLowerCase() || item.name === user.name,
+    ) ?? null
+  }, [user, data.teachers])
+
+  // Jadwal mengajar guru pada hari yang dipilih.
+  const teacherSchedulesToday = useMemo(() => {
+    if (!currentTeacher) return []
+    const day = dayNameFromDate(selectedDate)
+    return (data.teachingSchedules ?? []).filter(
+      (s) => s.teacherId === currentTeacher.id && s.day === day,
+    )
+  }, [currentTeacher, selectedDate, data.teachingSchedules])
+
+  // Mata pelajaran yang bisa diampu guru pada hari ini (berdasarkan jadwal).
   const allowedSubjects = useMemo(() => {
     if (user?.role !== 'guru') return SUBJECTS
-    const teacher = data.teachers.find(
-      (item) => item.email.toLowerCase() === user.email.toLowerCase() || item.name === user.name,
-    )
-    return teacher?.subjects?.length ? teacher.subjects : []
-  }, [user, data.teachers])
+    if (teacherSchedulesToday.length === 0) return []
+    return Array.from(new Set(teacherSchedulesToday.map((s) => s.subject)))
+  }, [user, teacherSchedulesToday])
+
+  // Kelas yang bisa diakses guru pada hari ini (berdasarkan jadwal).
+  const allowedClassIds = useMemo(() => {
+    if (user?.role !== 'guru') return data.classes.map((c) => c.id)
+    if (teacherSchedulesToday.length === 0) return []
+    return Array.from(new Set(teacherSchedulesToday.flatMap((s) => s.classIds)))
+  }, [user, teacherSchedulesToday, data.classes])
 
   useEffect(() => {
     if (!subject && allowedSubjects.length > 0) setSubject(allowedSubjects[0])
+    // Reset subject jika tidak ada di jadwal hari ini.
+    if (allowedSubjects.length > 0 && !allowedSubjects.includes(subject)) {
+      setSubject(allowedSubjects[0])
+    }
   }, [allowedSubjects, subject])
+
+  // Auto-set classId ke kelas pertama yang dijadwalkan jika kelas saat ini tidak diizinkan.
+  useEffect(() => {
+    if (user?.role !== 'guru') return
+    if (allowedClassIds.length === 0) return
+    if (!allowedClassIds.includes(classId)) {
+      setClassId(allowedClassIds[0])
+    }
+  }, [user, allowedClassIds, classId])
 
   const [historyQuery, setHistoryQuery] = useState('')
   const [historyClass, setHistoryClass] = useState('all')
@@ -91,9 +136,9 @@ export function Absensi() {
   const roster = useMemo(
     () =>
       data.students
-        .filter((s) => s.classId === classId && s.status === 'aktif')
+        .filter((s) => s.classId === classId && s.status === 'aktif' && (user?.role !== 'guru' || allowedClassIds.includes(s.classId)))
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [data.students, classId],
+    [data.students, classId, user, allowedClassIds],
   )
 
   const classMap = useMemo(() => new Map(data.classes.map((c) => [c.id, c])), [data.classes])
@@ -357,6 +402,11 @@ export function Absensi() {
                 Tanggal yang dipilih adalah akhir pekan/hari libur. Kehadiran tidak dapat diisi.
               </div>
             )}
+            {user?.role === 'guru' && allowedSubjects.length === 0 && isSchoolDay(selectedDate, data.settings.holidays ?? []) && (
+              <div className="mx-5 mt-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[11.5px] font-medium text-sky-700">
+                Anda tidak memiliki jadwal mengajar pada hari {dayNameFromDate(selectedDate)}. Daftar kehadiran siswa kosong.
+              </div>
+            )}
             <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 xl:grid-cols-4">
               <Input
                 label="Tanggal"
@@ -370,7 +420,13 @@ export function Absensi() {
                 label="Kelas"
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
-                options={data.classes.map((c) => ({ value: c.id, label: `Kelas ${c.name}` }))}
+                options={
+                  user?.role === 'guru'
+                    ? data.classes
+                        .filter((c) => allowedClassIds.includes(c.id))
+                        .map((c) => ({ value: c.id, label: `Kelas ${c.name}` }))
+                    : data.classes.map((c) => ({ value: c.id, label: `Kelas ${c.name}` }))
+                }
                 required
               />
               <Select
@@ -378,8 +434,12 @@ export function Absensi() {
                 value={subject}
                 onChange={(e) => {
                   setSubject(e.target.value)
-                  const match = data.teachers.find((t) => t.subjects.includes(e.target.value))
-                  if (match) setTeacherId(match.id)
+                  if (user?.role === 'guru' && currentTeacher) {
+                    setTeacherId(currentTeacher.id)
+                  } else {
+                    const match = data.teachers.find((t) => t.subjects.includes(e.target.value))
+                    if (match) setTeacherId(match.id)
+                  }
                 }}
                 options={allowedSubjects.map((s) => ({ value: s, label: s }))}
                 required
@@ -388,7 +448,11 @@ export function Absensi() {
                 label="Guru Pengampu"
                 value={teacherId}
                 onChange={(e) => setTeacherId(e.target.value)}
-                options={data.teachers.map((t) => ({ value: t.id, label: t.name }))}
+                options={
+                  user?.role === 'guru' && currentTeacher
+                    ? [{ value: currentTeacher.id, label: currentTeacher.name }]
+                    : data.teachers.map((t) => ({ value: t.id, label: t.name }))
+                }
                 required
               />
               <div className="sm:col-span-2 xl:col-span-3">
