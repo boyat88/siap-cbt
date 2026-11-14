@@ -466,15 +466,15 @@ export function Ujian() {
             <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl font-bold backdrop-blur">
               CBT
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Mode Ujian Siswa</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-outline-strong">Mode Ujian Siswa</h1>
             <p className="mt-1 text-sm text-slate-200">
               {data.settings.school.name}
             </p>
           </div>
 
-          <Card className="p-6">
+          <Card className="p-6 border-brand-200/50 bg-gradient-to-br from-white/80 to-brand-50/30">
             <h2 className="mb-1 text-base font-bold text-navy-950">Masuk ke Ujian</h2>
-            <p className="mb-4 text-xs text-slate-500">Ketik NISN Anda dan token ujian dari guru.</p>
+            <p className="mb-4 text-xs text-slate-700">Ketik NISN Anda dan token ujian dari guru.</p>
             <div className="space-y-3">
               <Input
                 label="NISN"
@@ -519,13 +519,13 @@ export function Ujian() {
             </Button>
             <button
               onClick={() => navigate('/login')}
-              className="mt-3 w-full text-center text-xs font-medium text-slate-400 hover:text-slate-600"
+              className="mt-3 w-full text-center text-xs font-medium text-slate-600 hover:text-slate-600"
             >
               Masuk sebagai guru / administrator →
             </button>
           </Card>
 
-          <p className="mt-6 text-center text-[11px] text-slate-300">
+          <p className="mt-6 text-center text-[11px] text-slate-600">
             Pastikan Anda menggunakan browser Chrome/Edge dan koneksi internet stabil selama ujian.
           </p>
         </div>
@@ -542,10 +542,10 @@ export function Ujian() {
           <Card>
             <div className="border-b border-slate-100 px-5 py-4">
               <h1 className="text-lg font-bold text-navy-950">{exam?.title}</h1>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-700">
                 {exam?.subject} · {exam?.durationMinutes} menit · {exam?.questions.length} soal · {examTotalPointsSafe(exam)} poin total
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-700">
                 Peserta: <span className="font-semibold text-navy-950">{student?.name}</span> (Kelas {student?.classId ? data.classes.find((c) => c.id === student.classId)?.name : '-'})
               </p>
             </div>
@@ -610,7 +610,7 @@ export function Ujian() {
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-navy-950">{exam.title}</p>
-              <p className="truncate text-[11px] text-slate-500">
+              <p className="truncate text-[11px] text-slate-700">
                 {student?.name} · Kelas {classLabel(attempt.className).replace('Kelas ', '')}
               </p>
             </div>
@@ -652,7 +652,7 @@ export function Ujian() {
           {/* Soal */}
           <main className="flex-1">
             {q ? (
-              <Card className="p-5">
+              <Card className="p-5 border-brand-200/50 bg-gradient-to-br from-white/90 to-sky-50/20">
                 {q.sectionStimulus && (
                   <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3">
                     <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-sky-700">Instruksi Bagian</p>
@@ -668,7 +668,7 @@ export function Ujian() {
                       {isPg ? 'Pilihan Ganda' : 'Esai'} · {q.points} poin
                     </Badge>
                   </div>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-slate-600">
                     Terjawab {progress.answered} dari {progress.total}
                   </span>
                 </div>
@@ -748,9 +748,9 @@ export function Ujian() {
 
           {/* Navigasi soal */}
           <aside className="lg:w-72">
-            <Card className="p-4">
+            <Card className="p-4 border-brand-200/50 bg-gradient-to-br from-white/80 to-violet-50/20">
               <div className="mb-3">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Navigasi Soal</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Navigasi Soal</p>
               </div>
               <div className="grid grid-cols-5 gap-2">
                 {attempt.questionOrder.map((qid, idx) => {
@@ -766,7 +766,7 @@ export function Ujian() {
                           ? 'bg-navy-900 text-white ring-2 ring-brand-400'
                           : answered
                             ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
                       )}
                     >
                       {idx + 1}
@@ -774,7 +774,7 @@ export function Ujian() {
                   )
                 })}
               </div>
-              <div className="mt-3 flex flex-wrap gap-3 text-[10.5px] text-slate-500">
+              <div className="mt-3 flex flex-wrap gap-3 text-[10.5px] text-slate-700">
                 <span className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded bg-emerald-100" /> Terjawab
                 </span>
@@ -854,7 +854,7 @@ export function Ujian() {
     return (
       <div className="min-h-screen bg-slate-50 px-4 py-10">
         <div className="mx-auto max-w-lg">
-          <Card className="p-6 text-center">
+          <Card className="p-6 text-center border-brand-200/50 bg-gradient-to-br from-white/80 to-emerald-50/20">
             {disqualified ? (
               <>
                 <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-rose-100 text-rose-600">
@@ -876,7 +876,7 @@ export function Ujian() {
                   Jawaban Anda telah terkumpul pada {finalAttempt?.submittedAt ? formatTime(finalAttempt.submittedAt) : '-'}.
                 </p>
                 {finalAttempt?.previousAttemptId && (
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-700">
                     Ini adalah attempt pengulangan.
                   </p>
                 )}
@@ -885,16 +885,16 @@ export function Ujian() {
 
             {showResult && exam && finalAttempt && (
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-left">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Hasil Sementara</p>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-700">Hasil Sementara</p>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-[11px] text-slate-400">Pilihan Ganda</p>
+                    <p className="text-[11px] text-slate-600">Pilihan Ganda</p>
                     <p className="font-bold text-navy-950">
                       {finalAttempt.autoPoints ?? 0}/{finalAttempt.pgTotalPoints ?? 0} poin
                     </p>
                   </div>
                   <div>
-                    <p className="text-[11px] text-slate-400">Esai</p>
+                    <p className="text-[11px] text-slate-600">Esai</p>
                     <p className="font-bold text-navy-950">
                       {finalAttempt.essayScores
                         ? `${Object.values(finalAttempt.essayScores).reduce((a, b) => a + b, 0)}/${examEssayPointsSafe(exam)} poin`
@@ -960,7 +960,7 @@ export function Ujian() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">
+    <div className="flex min-h-screen items-center justify-center text-sm text-slate-700">
       Memuat...
     </div>
   )
