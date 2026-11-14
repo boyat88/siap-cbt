@@ -86,7 +86,7 @@ export async function generateExamCardWord(info: ExamCardInfo): Promise<void> {
   .name { font-size: 9pt; font-weight: bold; text-align: center; margin-bottom: 2px; }
   .nisn { font-size: 7pt; text-align: center; color: #6b7280; margin-bottom: 4px; }
   .detail { font-size: 7pt; margin-bottom: 1px; }
-  .detail b { font-weight: bold; }
+  .detail b { font-weight: bold; display: inline-block; width: 70px; text-align: right; padding-right: 2px; }
   .sig { text-align: center; margin-top: 6px; padding-top: 4px; border-top: 1px solid #d1d5db; }
   .sig .name { font-size: 7pt; font-weight: bold; }
   .sig .nip { font-size: 6pt; color: #6b7280; }
