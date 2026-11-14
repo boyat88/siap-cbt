@@ -44,7 +44,7 @@ import {
 function ChartTip({ active, payload, label, suffix = '%' }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg">
+    <div className="rounded-xl border border-white/70 bg-white/90 px-3 py-2 shadow-lift backdrop-blur-xl">
       <p className="text-[10px] font-semibold text-slate-500">{label}</p>
       {payload.map((item: any) => (
         <p key={item.name} className="mt-0.5 flex items-center gap-1.5 text-xs font-bold text-navy-950">
@@ -56,6 +56,29 @@ function ChartTip({ active, payload, label, suffix = '%' }: any) {
     </div>
   )
 }
+
+const statTones = {
+  brand: {
+    tile: 'bg-gradient-to-br from-brand-400 to-brand-700 shadow-lg shadow-brand-500/40',
+    blob: 'bg-brand-400/30',
+  },
+  emerald: {
+    tile: 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/40',
+    blob: 'bg-emerald-400/25',
+  },
+  rose: {
+    tile: 'bg-gradient-to-br from-rose-400 to-rose-600 shadow-lg shadow-rose-500/40',
+    blob: 'bg-rose-400/25',
+  },
+  amber: {
+    tile: 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/40',
+    blob: 'bg-amber-400/25',
+  },
+  navy: {
+    tile: 'bg-gradient-to-br from-navy-600 to-navy-900 shadow-lg shadow-navy-900/40',
+    blob: 'bg-navy-500/25',
+  },
+} as const
 
 function StatCard({
   label,
@@ -72,38 +95,44 @@ function StatCard({
   suffix?: string
   hint: string
   icon: React.ReactNode
-  tone: 'brand' | 'emerald' | 'rose' | 'amber' | 'navy'
+  tone: keyof typeof statTones
   delta?: string
   deltaUp?: boolean
 }) {
-  const tones = {
-    brand: 'bg-brand-50 text-brand-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    rose: 'bg-rose-50 text-rose-600',
-    amber: 'bg-amber-50 text-amber-600',
-    navy: 'bg-navy-50 text-navy-700',
-  }
   return (
-    <Card className="group relative overflow-hidden p-5 transition-shadow hover:shadow-lift">
-      <div className="flex items-start justify-between gap-3">
+    <Card className="card-lift group relative overflow-hidden p-5">
+      <div
+        className={cn(
+          'pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full opacity-60 blur-2xl transition-opacity duration-500 group-hover:opacity-100',
+          statTones[tone].blob,
+        )}
+      />
+      <div className="relative flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</p>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-[28px] font-extrabold leading-none tracking-tight text-navy-950">{value}</span>
+          <div className="mt-2.5 flex items-baseline gap-1">
+            <span className="text-[30px] font-extrabold leading-none tracking-tight text-navy-950">{value}</span>
             {suffix && <span className="text-sm font-bold text-slate-400">{suffix}</span>}
           </div>
         </div>
-        <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-105', tones[tone])}>
+        <div
+          className={cn(
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] text-white ring-1 ring-inset ring-white/30 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110',
+            statTones[tone].tile,
+          )}
+        >
           {icon}
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-2">
+      <div className="relative mt-4 flex items-center justify-between gap-2">
         <p className="text-[10.5px] text-slate-500">{hint}</p>
         {delta && (
           <span
             className={cn(
-              'flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold',
-              deltaUp ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600',
+              'flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset',
+              deltaUp
+                ? 'bg-emerald-50 text-emerald-600 ring-emerald-100'
+                : 'bg-rose-50 text-rose-600 ring-rose-100',
             )}
           >
             {deltaUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -111,6 +140,7 @@ function StatCard({
           </span>
         )}
       </div>
+      <span className="pointer-events-none absolute inset-x-5 bottom-0 h-[2px] rounded-full bg-gradient-to-r from-brand-400 via-brand-500 to-brand-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
     </Card>
   )
 }
@@ -230,37 +260,86 @@ export function Dashboard() {
 
   const totalAttention = useMemo(() => {
     const summary = summarizeSessions(sessions30, [])
-    return Object.values(summary).filter((v) => v.total > 0 && rateOf(v) < 90).length
-  }, [sessions30])
+    return Object.entries(summary).filter(([studentId, values]) => {
+      const student = studentMap.get(studentId)
+      return student?.status === 'aktif' && values.total > 0 && rateOf(values) < 90
+    }).length
+  }, [sessions30, studentMap])
 
   const classesCovered = new Set(todaySessions.map((s) => s.classId)).size
 
   return (
     <div className="stagger-children space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
-            <Sparkles size={11} />
-            {formatDate(activeDate, 'full')}
+      <section className="hero-panel">
+        <div className="hero-orb -right-12 -top-20 h-60 w-60 bg-brand-300/30" />
+        <div className="hero-orb -bottom-28 left-1/3 h-72 w-72 bg-cyan-300/20" />
+        <div className="hero-orb right-1/4 top-1/2 h-36 w-36 bg-white/10" />
+
+        <div className="relative z-10 flex flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/90 backdrop-blur-md">
+                <Sparkles size={11} />
+                {formatDate(activeDate, 'full')}
+              </span>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md',
+                  todaySessions.length > 0
+                    ? 'border-emerald-300/30 bg-emerald-400/15 text-emerald-100'
+                    : 'border-amber-300/30 bg-amber-400/15 text-amber-100',
+                )}
+              >
+                <span
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    todaySessions.length > 0
+                      ? 'bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.95)]'
+                      : 'bg-amber-300 shadow-[0_0_8px_rgba(252,211,77,0.95)]',
+                  )}
+                />
+                {todaySessions.length > 0 ? 'Data siap' : 'Belum ada absensi'}
+              </span>
+            </div>
+
+            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-white sm:text-[30px]">
+              {greeting()}, {user?.name.split(' ')[0]} 👋
+            </h1>
+            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-white/75">
+              Berikut ringkasan kehadiran peserta didik {isToday ? 'hari ini' : `pada ${formatDate(activeDate, 'long')}`}.
+              Pantau tren, kelas, dan peserta didik yang perlu perhatian dalam satu tampilan.
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-medium text-white/70">
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-300 shadow-[0_0_8px_rgba(147,197,253,0.9)]" />
+                {activeStudents.length} peserta didik aktif
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(103,232,249,0.9)]" />
+                {data.classes.length} kelas
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.9)]" />
+                Kehadiran {todayRate}%
+              </span>
+            </div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-navy-950 sm:text-2xl">
-            {greeting()}, {user?.name.split(' ')[0]} 👋
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Berikut ringkasan kehadiran peserta didik {isToday ? 'hari ini' : `pada ${formatDate(activeDate, 'long')}`}.
-          </p>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button type="button" className="hero-btn hero-btn-light" onClick={() => navigate('/rekap')}>
+              <Download size={15} />
+              Unduh Rekap
+            </button>
+            <button type="button" className="hero-btn hero-btn-ghost" onClick={() => navigate('/absensi')}>
+              <Plus size={15} />
+              Input Absensi
+            </button>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="md" onClick={() => navigate('/rekap')}>
-            <Download size={15} />
-            Unduh Rekap
-          </Button>
-          <Button onClick={() => navigate('/absensi')} size="md">
-            <Plus size={15} />
-            Input Absensi
-          </Button>
-        </div>
-      </div>
+
+        <div className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -297,20 +376,17 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+        <Card className="glass-sheen xl:col-span-2">
           <CardHeader
             title="Tren Kehadiran"
             description={`Persentase kehadiran ${range} hari sekolah terakhir`}
             action={
-              <div className="flex items-center rounded-lg bg-slate-100 p-0.5">
+              <div className="segmented">
                 {[7, 14, 30].map((value) => (
                   <button
                     key={value}
                     onClick={() => setRange(value as 7 | 14 | 30)}
-                    className={cn(
-                      'rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-colors',
-                      range === value ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
-                    )}
+                    className={cn('segmented-btn', range === value && 'segmented-btn-active')}
                   >
                     {value} Hari
                   </button>
@@ -318,16 +394,16 @@ export function Dashboard() {
               </div>
             }
           />
-          <div className="mt-4 h-[250px] px-1 pb-2 pr-4">
+          <div className="mt-4 h-[240px] px-1 pb-2 pr-4 sm:h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="attendanceFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b9df8" stopOpacity={0.28} />
-                    <stop offset="100%" stopColor="#3b9df8" stopOpacity={0.01} />
+                    <stop offset="0%" style={{ stopColor: 'rgb(var(--brand-400))', stopOpacity: 0.34 }} />
+                    <stop offset="100%" style={{ stopColor: 'rgb(var(--brand-400))', stopOpacity: 0.01 }} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--brand-100))" vertical={false} />
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: 10, fill: '#94a3b8' }}
@@ -343,33 +419,33 @@ export function Dashboard() {
                   tickLine={false}
                   tickFormatter={(v) => `${v}%`}
                 />
-                <Tooltip content={<ChartTip />} cursor={{ stroke: '#bfe3ff', strokeWidth: 1 }} />
+                <Tooltip content={<ChartTip />} cursor={{ stroke: 'rgb(var(--brand-300))', strokeWidth: 1 }} />
                 <Area
                   type="monotone"
                   dataKey="kehadiran"
                   name="Kehadiran"
-                  stroke="#257ee5"
-                  strokeWidth={2.4}
+                  stroke="rgb(var(--brand-500))"
+                  strokeWidth={2.6}
                   fill="url(#attendanceFill)"
-                  dot={{ r: 3, fill: '#fff', stroke: '#257ee5', strokeWidth: 2 }}
-                  activeDot={{ r: 5, fill: '#257ee5', stroke: '#fff', strokeWidth: 2 }}
+                  dot={{ r: 3, fill: '#fff', stroke: 'rgb(var(--brand-500))', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: 'rgb(var(--brand-500))', stroke: '#fff', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+          <div className="flex items-center justify-between border-t border-slate-100/80 px-5 py-3">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-brand-600" /> Persentase kehadiran
+                <span className="h-2 w-2 rounded-full bg-brand-600 shadow-[0_0_8px_rgb(var(--brand-400)/0.8)]" /> Persentase kehadiran
               </span>
             </div>
             <span className="text-[10px] text-slate-400">Data diperbarui otomatis</span>
           </div>
         </Card>
 
-        <Card className="flex flex-col">
+        <Card className="glass-sheen flex flex-col">
           <CardHeader title="Distribusi Kehadiran" description="30 hari terakhir" />
-          <div className="relative mx-auto h-[185px] w-full max-w-[250px]">
+          <div className="relative mx-auto h-[190px] w-full max-w-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -388,7 +464,7 @@ export function Dashboard() {
                 <Tooltip
                   content={({ active, payload }: any) =>
                     active && payload?.length ? (
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] shadow-lg">
+                      <div className="rounded-lg border border-white/70 bg-white/90 px-3 py-2 text-[11px] shadow-lift backdrop-blur-xl">
                         <p className="font-bold text-slate-700">{payload[0].name}</p>
                         <p className="text-slate-500">
                           {payload[0].value} catatan · {percent(payload[0].value, totalRecords)}%
@@ -400,13 +476,13 @@ export function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[22px] font-extrabold leading-none text-navy-950">
+              <span className="text-[24px] font-extrabold leading-none text-navy-950">
                 {percent(statusData.find((s) => s.key === 'hadir')?.value ?? 0, totalRecords)}%
               </span>
               <span className="mt-1 text-[9.5px] font-medium text-slate-400">Total hadir</span>
             </div>
           </div>
-          <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3.5">
+          <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-100/80 px-5 py-3.5">
             {statusData.map((item) => (
               <div key={item.key} className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-1.5 text-[10.5px] text-slate-500">
@@ -421,38 +497,38 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card>
+        <Card className="glass-sheen">
           <CardHeader
             title="Kehadiran per Kelas"
             description="Rata-rata 30 hari terakhir"
-            action={<Badge tone="brand">Bahasa: persen</Badge>}
+            action={<Badge tone="brand">{data.classes.length} kelas</Badge>}
           />
           <div className="mt-2 h-[250px] px-2 pb-2 pr-5">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={classRates} margin={{ top: 8, right: 8, left: -22, bottom: 0 }} barCategoryGap="28%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--brand-100))" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} dy={6} />
                 <YAxis domain={[60, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                 <Tooltip
-                  cursor={{ fill: '#f8fafc' }}
+                  cursor={{ fill: 'rgb(var(--brand-50) / 0.7)' }}
                   content={({ active, payload, label }: any) =>
                     active && payload?.length ? (
-                      <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] shadow-lg">
+                      <div className="rounded-lg border border-white/70 bg-white/90 px-3 py-2 text-[11px] shadow-lift backdrop-blur-xl">
                         <p className="font-bold text-slate-700">Kelas {label}</p>
                         <p className="text-slate-500">Kehadiran: {payload[0].value}%</p>
                       </div>
                     ) : null
                   }
                 />
-                <Bar dataKey="rate" radius={[6, 6, 0, 0]} fill="#257ee5" maxBarSize={38}>
+                <Bar dataKey="rate" radius={[7, 7, 2, 2]} fill="rgb(var(--brand-500))" maxBarSize={38}>
                   {classRates.map((entry) => (
-                    <Cell key={entry.id} fill={entry.rate >= 92 ? '#10b981' : entry.rate >= 88 ? '#3b9df8' : '#f59e0b'} />
+                    <Cell key={entry.id} fill={entry.rate >= 92 ? '#10b981' : entry.rate >= 88 ? 'rgb(var(--brand-500))' : '#f59e0b'} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-3 gap-2 border-t border-slate-100 px-5 py-3">
+          <div className="grid grid-cols-3 gap-2 border-t border-slate-100/80 px-5 py-3">
             {[
               { color: 'bg-emerald-500', label: '≥ 92% Baik' },
               { color: 'bg-brand-500', label: '88–91% Cukup' },
@@ -466,22 +542,22 @@ export function Dashboard() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="glass-sheen">
           <CardHeader
             title="Peserta Didik Perlu Perhatian"
             description="Kehadiran rendah atau alpa tinggi"
             action={
-              <Link to="/rekap" className="flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:text-brand-700">
+              <Link to="/rekap" className="flex items-center gap-1 text-[11px] font-semibold text-brand-600 transition-colors hover:text-brand-700">
                 Lihat rekap <ChevronRight size={12} />
               </Link>
             }
           />
-          <div className="divide-y divide-slate-100 px-5 pb-2">
+          <div className="divide-y divide-slate-100/80 px-5 pb-2">
             {attention.length === 0 ? (
               <div className="py-10 text-center text-xs text-slate-500">Semua peserta didik dalam kondisi baik 🎉</div>
             ) : (
               attention.map((row) => (
-                <div key={row.student.id} className="flex items-center gap-3 py-3">
+                <div key={row.student.id} className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-brand-50/60">
                   <Avatar name={row.student.name} src={row.student.photo} size="md" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-semibold text-navy-950">{row.student.name}</p>
@@ -494,7 +570,7 @@ export function Dashboard() {
                       value={row.rate}
                       size={38}
                       stroke={3.5}
-                      color={row.rate < 75 ? '#f43f5e' : row.rate < 85 ? '#f59e0b' : '#3b9df8'}
+                      color={row.rate < 75 ? '#f43f5e' : row.rate < 85 ? '#f59e0b' : 'rgb(var(--brand-500))'}
                     />
                     <p className="mt-0.5 text-[8.5px] text-slate-400">{row.total} sesi</p>
                   </div>
@@ -502,7 +578,7 @@ export function Dashboard() {
               ))
             )}
           </div>
-          <div className="mx-5 mb-4 rounded-lg bg-amber-50 px-3 py-2.5 ring-1 ring-inset ring-amber-100">
+          <div className="mx-5 mb-4 rounded-xl bg-amber-50 px-3 py-2.5 shadow-inner-top ring-1 ring-inset ring-amber-100">
             <p className="text-[10px] leading-relaxed text-amber-700">
               <span className="font-bold">Catatan:</span> Ambang batas kehadiran minimal {data.settings.minimumAttendance}%.
               Peserta didik di bawah 90% perlu ditindaklanjuti oleh wali kelas.
@@ -511,7 +587,7 @@ export function Dashboard() {
         </Card>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="glass-sheen overflow-hidden">
         <CardHeader
           title="Aktivitas Absensi Terbaru"
           description="Sesi absensi yang terakhir diperbarui"
@@ -524,7 +600,7 @@ export function Dashboard() {
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[680px] text-left">
             <thead>
-              <tr className="border-y border-slate-100 bg-slate-50/70 text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
+              <tr className="border-y border-slate-100/80 bg-brand-50/60 text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="px-5 py-2.5">Kelas & Mapel</th>
                 <th className="px-4 py-2.5">Tanggal / Jam</th>
                 <th className="px-4 py-2.5">Guru</th>
@@ -533,17 +609,17 @@ export function Dashboard() {
                 <th className="px-5 py-2.5 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100/80">
               {recent.map((session) => {
                 const values = Object.values(session.records)
                 const present = values.filter((v) => v === 'hadir' || v === 'terlambat').length
                 const rate = percent(present, values.length)
                 const teacher = data.teachers.find((t) => t.id === session.teacherId)
                 return (
-                  <tr key={session.id} className="group transition-colors hover:bg-slate-50/70">
+                  <tr key={session.id} className="group table-row-hover">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-[10px] font-bold text-brand-700">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-[10px] font-bold text-brand-700 shadow-sm ring-1 ring-white/70">
                           {classMap.get(session.classId)?.name}
                         </span>
                         <div>
@@ -579,7 +655,7 @@ export function Dashboard() {
                     <td className="px-5 py-3 text-right">
                       <button
                         onClick={() => navigate(`/absensi?date=${session.date}&class=${session.classId}`)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10.5px] font-semibold text-brand-600 opacity-0 transition-opacity hover:bg-brand-50 group-hover:opacity-100"
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10.5px] font-semibold text-brand-600 opacity-100 transition-all hover:bg-brand-50 sm:opacity-0 sm:group-hover:opacity-100"
                       >
                         Detail <ArrowUpRight size={12} />
                       </button>
@@ -590,7 +666,7 @@ export function Dashboard() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100/80 px-5 py-3">
           <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
             <CalendarCheck2 size={12} /> {data.sessions.length} sesi absensi tersimpan
           </span>

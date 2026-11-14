@@ -1,9 +1,10 @@
+@import 'katex/dist/katex.min.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* KaTeX untuk render rumus matematika */
-@import 'katex/dist/katex.min.css';
 
 /* Kode program dalam soal */
 .prose-code pre, .prose-code code {
@@ -53,13 +54,14 @@
   --brand-900: 30 58 138;
   --brand-950: 23 37 84;
 
-  --surface-alpha: 0.86;
-  --glass-blur: 14px;
+  --surface-alpha: 0.72;
+  --glass-blur: 20px;
 
-  --app-bg-image: radial-gradient(1100px 620px at 8% -10%, rgb(var(--brand-400) / 0.42), transparent 62%),
-    radial-gradient(900px 700px at 92% 8%, rgba(168, 85, 247, 0.3), transparent 60%),
-    radial-gradient(1000px 800px at 55% 110%, rgba(56, 189, 248, 0.34), transparent 62%),
-    linear-gradient(150deg, #f4f8ff 0%, #f8fafc 50%, #eef6ff 100%);
+  --app-bg-image: radial-gradient(1150px 680px at 6% -12%, rgb(var(--brand-400) / 0.52), transparent 60%),
+    radial-gradient(950px 760px at 97% 2%, rgba(99, 102, 241, 0.3), transparent 60%),
+    radial-gradient(1000px 820px at 52% 112%, rgba(56, 189, 248, 0.4), transparent 62%),
+    radial-gradient(680px 480px at 72% 16%, rgba(255, 255, 255, 0.72), transparent 62%),
+    linear-gradient(158deg, #f6faff 0%, #eaf2ff 42%, #f8fafc 72%, #e6f1ff 100%);
   --app-bg-size: cover;
   --app-bg-position: center;
   --app-bg-repeat: no-repeat;
@@ -73,7 +75,7 @@ body {
   @apply text-slate-900 antialiased;
   position: relative;
   min-height: 100vh;
-  background-color: rgb(248 250 252);
+  background-color: #eef5ff;
   font-feature-settings: 'ss01' on, 'ss02' on, 'cv01' on;
 }
 
@@ -89,6 +91,25 @@ body::before {
   background-position: var(--app-bg-position);
   background-repeat: var(--app-bg-repeat);
   transition: background-image 0.5s ease;
+}
+
+/* Grid halus untuk memberi kesan premium tanpa mengganggu keterbacaan. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.032) 1px, transparent 1px);
+  background-size: 58px 58px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 0%, transparent 78%);
+  opacity: 0.55;
+}
+
+html[data-app-bg='image'] body::after {
+  opacity: 0.18;
 }
 
 #root {
@@ -120,7 +141,342 @@ body::before {
 }
 
 .glass-panel {
-  @apply bg-white/80 backdrop-blur-xl;
+  @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-glass;
+}
+
+.glass-card {
+  @apply bg-white/60 backdrop-blur-lg border border-white/30 shadow-glass rounded-2xl;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  @apply shadow-glass-lg border-white/50;
+  transform: translateY(-2px);
+}
+
+.glass-sidebar {
+  @apply bg-navy-950/90 backdrop-blur-xl border-r border-white/10;
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 60px rgba(59, 130, 246, 0.1);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 60px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.2); }
+}
+
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+}
+
+/* ------------------------------------------------------------------ */
+/* Premium blue & white glassmorphism                                  */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Permukaan kaca utama. Latar belakang sengaja tidak diatur di sini agar
+ * aturan kontras otomatis (.bg-white) tetap bekerja pada tema gelap.
+ */
+.glass-card {
+  border: 1px solid rgb(255 255 255 / 0.72);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.85),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 26px 55px -34px rgb(15 23 42 / 0.32);
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+html[data-glass='on'] .glass-card {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.35);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.35);
+}
+
+.glass-card:hover {
+  border-color: rgb(var(--brand-300) / 0.75);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.9),
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 34px 64px -34px rgb(15 23 42 / 0.36),
+    0 0 42px -18px rgb(var(--brand-500) / 0.55);
+}
+
+/* Kartu yang ikut terangkat saat disentuh kursor. */
+.card-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Kilau tipis di bagian atas permukaan kaca. */
+.glass-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-sheen::before {
+  content: '';
+  position: absolute;
+  inset-inline: 12%;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.95), transparent);
+  pointer-events: none;
+}
+
+/* Panel hero biru premium untuk dashboard. */
+.hero-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background:
+    radial-gradient(760px 420px at 8% -30%, rgb(var(--brand-400) / 0.55), transparent 62%),
+    radial-gradient(680px 460px at 96% 130%, rgba(56, 189, 248, 0.45), transparent 62%),
+    linear-gradient(125deg, rgb(var(--brand-950)) 0%, rgb(var(--brand-800)) 46%, rgb(var(--brand-600)) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 40px 80px -44px rgb(var(--brand-900) / 0.95),
+    0 0 60px -30px rgb(var(--brand-500) / 0.8);
+}
+
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 100% at 80% 0%, #000, transparent 72%);
+  mask-image: radial-gradient(ellipse 80% 100% at 80% 0%, #000, transparent 72%);
+  opacity: 0.6;
+}
+
+.hero-orb {
+  position: absolute;
+  z-index: -1;
+  border-radius: 9999px;
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.7rem;
+  padding-inline: 1.1rem;
+  border-radius: 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.hero-btn:active {
+  transform: scale(0.975);
+}
+
+.hero-btn-light {
+  background: #ffffff;
+  color: rgb(var(--brand-800));
+  box-shadow: 0 16px 34px -18px rgb(0 0 0 / 0.7), inset 0 1px 0 #fff;
+}
+
+.hero-btn-light:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 44px -18px rgb(0 0 0 / 0.75), 0 0 26px -8px rgb(255 255 255 / 0.7);
+}
+
+.hero-btn-ghost {
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.28);
+  color: #ffffff;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.hero-btn-ghost:hover {
+  transform: translateY(-2px);
+  background: rgb(255 255 255 / 0.2);
+  border-color: rgb(255 255 255 / 0.45);
+}
+
+/* Tombol utama bergradien biru dengan glow lembut. */
+.btn-primary {
+  background-image: linear-gradient(
+    120deg,
+    rgb(var(--brand-600)),
+    rgb(var(--brand-500)) 55%,
+    rgb(var(--brand-600))
+  );
+  background-size: 180% 100%;
+  box-shadow:
+    0 14px 30px -16px rgb(var(--brand-600) / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.28);
+  transition:
+    background-position 0.5s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-position: 100% 50%;
+  box-shadow:
+    0 20px 38px -16px rgb(var(--brand-600) / 0.95),
+    0 0 30px -12px rgb(var(--brand-500) / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.985);
+}
+
+/* Segmented control (mis. 7 / 14 / 30 hari). */
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 0.8rem;
+  border: 1px solid rgb(255 255 255 / 0.7);
+  background: rgb(255 255 255 / 0.55);
+  box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.segmented-btn {
+  border-radius: 0.6rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.segmented-btn:hover {
+  color: #334155;
+}
+
+.segmented-btn-active {
+  color: #ffffff;
+  background-image: linear-gradient(120deg, rgb(var(--brand-600)), rgb(var(--brand-500)));
+  box-shadow: 0 8px 18px -10px rgb(var(--brand-600) / 0.9);
+}
+
+/* Header aplikasi dengan garis gradien tipis. */
+.app-header {
+  border-bottom: 1px solid rgb(255 255 255 / 0.65);
+  background: rgb(255 255 255 / 0.72);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 18px 40px -34px rgb(15 23 42 / 0.55);
+}
+
+.app-header::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--brand-400) / 0.5),
+    rgb(var(--brand-300) / 0.2),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Menu bawah (mobile) bergaya kaca mengambang. */
+.mobile-nav-glass {
+  background: rgb(255 255 255 / 0.82);
+  border-top: 1px solid rgb(255 255 255 / 0.7);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 -18px 40px -30px rgb(15 23 42 / 0.55);
+}
+
+/* Baris tabel dengan sorotan biru lembut. */
+.table-row-hover {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table-row-hover:hover {
+  background-color: rgb(var(--brand-50) / 0.7);
+  box-shadow: inset 3px 0 0 0 rgb(var(--brand-500) / 0.75);
+}
+
+/* Penyesuaian tema gelap untuk permukaan baru. */
+html[data-content-fg='light'] [data-content-body] .glass-card {
+  border-color: rgb(255 255 255 / 0.14);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 30px 60px -34px rgb(0 0 0 / 0.75);
+}
+
+html[data-content-fg='light'] [data-content-body] .glass-card:hover {
+  border-color: rgb(255 255 255 / 0.26);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 36px 70px -34px rgb(0 0 0 / 0.8),
+    0 0 46px -20px rgb(var(--brand-400) / 0.6);
+}
+
+html[data-content-fg='light'] [data-content-body] .segmented {
+  border-color: rgb(255 255 255 / 0.14);
+  background: rgb(255 255 255 / 0.08);
+}
+
+html[data-content-fg='light'] [data-content-body] .segmented-btn {
+  color: #cbd5e1;
+}
+
+html[data-content-fg='light'] [data-content-body] .table-row-hover:hover {
+  background-color: rgb(255 255 255 / 0.07);
+}
+
+html[data-content-fg='light'] [data-content-body] .hover\:text-brand-700:hover {
+  color: rgb(var(--brand-300));
+}
+
+html[data-header-fg='light'] .app-header {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(15 23 42 / 0.62);
 }
 
 ::selection {

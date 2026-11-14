@@ -115,6 +115,29 @@ Atau jalankan lewat Command Prompt:
 
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\pasang-di-laptop-baru.ps1
 
+BILA POWERSHELL DIBLOKIR (TANPA POWERSHELL)
+-------------------------------------------
+Beberapa laptop memblokir PowerShell dengan pesan "This operation has been
+cancelled due to restrictions in effect on this computer". Aplikasi tetap
+bisa dipakai penuh tanpa PowerShell:
+
+1. Ekstrak paket ke folder yang mudah diingat, misalnya D:\SIAP-SMP.
+2. Klik dua kali file:
+      scripts\buka-siap.cmd
+   Skrip ini menyalakan server (bila belum menyala) lalu membuka browser.
+   Bisa juga dibuat pintasan sendiri ke file tersebut.
+3. Untuk membuat pintasan "SIAP SMP" di Desktop dan Start Menu sekaligus
+   menyalakan server otomatis saat Windows login, klik dua kali:
+      scripts\buat-shortcut-siap.vbs
+4. Bila Windows memblokir file karena berasal dari internet, klik kanan file
+   > Properties > centang "Unblock" > OK.
+
+Tidak perlu PowerShell, Node.js, atau internet. Seluruh data tetap sama.
+
+Bila server perlu dimatikan tetapi PowerShell diblokir: buka Task Manager
+(Ctrl+Shift+Esc) > Details > pilih semua "node.exe" > End task. Data tidak
+akan hilang karena tersimpan di folder server-data.
+
 AGAR TAMPILAN (TEMA/WARNA) SAMA
 ------------------------------
 Tema dan pengaturan tampilan tersimpan di browser, bukan di server, jadi

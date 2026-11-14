@@ -47,7 +47,8 @@ function resolvePageTitle(pathname: string): { title: string; group: string } {
 
 function LogoBlock({ logo }: { logo?: string }) {
   return (
-    <div className="flex h-[78px] items-center border-b border-white/[0.07] px-5">
+    <div className="relative flex h-[80px] items-center border-b border-white/[0.08] px-5">
+      <span className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
       <Brand dark logo={logo} />
     </div>
   )
@@ -119,7 +120,7 @@ function SidebarAccountMenu({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <button
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-white/[0.04]"
+        className="flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2 py-2 text-left transition-all hover:border-white/[0.08] hover:bg-white/[0.07] active:scale-[0.99]"
         aria-label="Menu akun"
       >
         <Avatar name={user?.name ?? 'Administrator'} src={user?.photo} size="sm" className="ring-navy-900" />
@@ -145,16 +146,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div
       data-menu-surface
-      className="flex h-full flex-col overflow-hidden bg-navy-950"
+      className="relative flex h-full flex-col overflow-hidden bg-navy-950"
       style={theme.menuColor ? { backgroundColor: theme.menuColor } : undefined}
     >
-      <div className="sidebar-glow pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top_right,rgba(59,157,248,0.18),transparent_65%)]" />
+      <div className="sidebar-glow pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top_right,rgba(96,165,250,0.28),transparent_65%)]" />
+      <div className="sidebar-glow pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-[radial-gradient(ellipse_at_bottom_left,rgba(56,189,248,0.2),transparent_68%)]" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/10 via-white/[0.04] to-transparent" />
       <LogoBlock logo={data.settings.appLogo} />
 
       <div className="px-3 pt-4">
-        <div className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.045] p-3">
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.06] p-3 shadow-inner-top backdrop-blur-md">
           <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-400/15 text-brand-300">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400/30 to-brand-600/20 text-brand-200 shadow-glow-sm ring-1 ring-inset ring-white/10">
               <Building2 size={15} />
             </div>
             <div className="min-w-0">
@@ -187,22 +190,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       to={item.to}
                       onClick={onNavigate}
                       className={cn(
-                        'nav-link group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[12.5px] font-medium transition-all',
+                        'nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[12.5px] font-medium transition-all',
                         active ? 'text-white' : 'text-slate-400 hover:bg-white/[0.045] hover:text-slate-100',
                       )}
                       style={
                         active
                           ? {
                               background: `linear-gradient(90deg, ${item.accent}38, ${item.accent}0d)`,
-                              boxShadow: `inset 0 0 0 1px ${item.accent}30`,
+                              boxShadow: `inset 0 0 0 1px ${item.accent}33, 0 12px 28px -18px ${item.accent}cc`,
                             }
                           : undefined
                       }
                     >
                       {active && (
                         <span
-                          className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full"
-                          style={{ backgroundColor: item.accent }}
+                          className="absolute -left-3 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full"
+                          style={{ backgroundColor: item.accent, boxShadow: `0 0 12px ${item.accent}` }}
                         />
                       )}
                       <span
@@ -212,7 +215,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                         )}
                         style={
                           active
-                            ? { backgroundColor: `${item.accent}24`, color: item.accent }
+                            ? { backgroundColor: `${item.accent}24`, color: item.accent, boxShadow: `0 0 16px -6px ${item.accent}` }
                             : undefined
                         }
                       >
@@ -240,7 +243,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="relative px-3 pb-4">
+      <div className="relative mt-4 border-t border-white/[0.06] px-3 pb-4 pt-3">
         <SidebarAccountMenu onNavigate={onNavigate} />
       </div>
     </div>
@@ -272,19 +275,19 @@ function NotificationsMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 shadow-inner-top backdrop-blur-md transition-all hover:border-brand-200 hover:bg-slate-50 hover:text-brand-600 hover:shadow-glow-sm active:scale-95"
         aria-label="Notifikasi"
       >
         <Bell size={18} />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(244,63,94,0.6)]">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div data-keep-surface className="absolute right-0 top-full z-50 mt-2 w-[min(360px,calc(100vw-2rem))] origin-top-right animate-fade-up overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lift">
+        <div data-keep-surface className="absolute right-0 top-full z-50 mt-2 w-[min(360px,calc(100vw-2rem))] origin-top-right animate-scale-in overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-lift backdrop-blur-2xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div>
               <p className="text-sm font-bold text-navy-950">Notifikasi</p>
@@ -353,7 +356,7 @@ function ProfileMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2.5 rounded-xl border border-transparent py-1 pl-1 pr-1.5 transition-colors hover:border-slate-200 hover:bg-slate-50 sm:pr-2.5"
+        className="flex items-center gap-2.5 rounded-xl border border-transparent py-1 pl-1 pr-1.5 transition-all hover:border-slate-200 hover:bg-slate-50 hover:shadow-inner-top sm:pr-2.5"
       >
         <Avatar name={user?.name ?? 'Administrator'} src={user?.photo} />
         <div className="hidden text-left sm:block">
@@ -364,7 +367,7 @@ function ProfileMenu() {
       </button>
 
       {open && (
-        <div data-keep-surface className="absolute right-0 top-full z-50 mt-2 w-60 origin-top-right animate-fade-up overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lift">
+        <div data-keep-surface className="absolute right-0 top-full z-50 mt-2 w-60 origin-top-right animate-scale-in overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-lift backdrop-blur-2xl">
           <div className="border-b border-slate-100 px-4 py-3.5">
             <p className="truncate text-xs font-bold text-navy-950">{user?.name}</p>
             <p className="truncate text-[10px] text-slate-500">{user?.email}</p>
@@ -458,11 +461,11 @@ export function Layout() {
   }, [])
 
   return (
-    <div data-app-shell className="min-h-screen bg-slate-50">
+    <div data-app-shell className="min-h-screen bg-transparent">
       {routeTick > 1 && <div key={routeTick} className="route-progress print:hidden" />}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 h-screen w-[260px] overflow-hidden print:hidden',
+          'fixed inset-y-0 left-0 z-40 h-screen w-[260px] overflow-hidden shadow-[18px_0_60px_-40px_rgba(2,6,23,0.8)] print:hidden glass-sidebar',
           sidebarHidden ? 'hidden' : 'hidden lg:block',
         )}
         style={{ position: 'fixed', top: 0, bottom: 0 }}
@@ -487,11 +490,11 @@ export function Layout() {
       )}
 
       <div className={cn('print:pl-0', !sidebarHidden && 'lg:pl-[260px]')}>
-        <header data-header-surface className="sticky top-0 z-30 flex h-[70px] print:hidden items-center justify-between gap-3 border-b border-slate-200/80 bg-white/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8" style={theme.headerColor ? { backgroundColor: theme.headerColor } : undefined}>
+        <header data-header-surface className="app-header sticky top-0 z-30 flex h-[72px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 print:hidden" style={theme.headerColor ? { backgroundColor: theme.headerColor } : undefined}>
           <div className="flex min-w-0 items-center gap-3">
             <button
               onClick={() => setSidebarHidden((hidden) => !hidden)}
-              className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 lg:flex"
+              className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 shadow-inner-top backdrop-blur-md transition-all hover:border-brand-200 hover:bg-slate-50 hover:text-brand-600 hover:shadow-glow-sm active:scale-95 lg:flex"
               aria-label={sidebarHidden ? 'Tampilkan menu samping' : 'Sembunyikan menu samping'}
               title={sidebarHidden ? 'Tampilkan menu' : 'Sembunyikan menu'}
             >
@@ -499,13 +502,13 @@ export function Layout() {
             </button>
             <button
               onClick={() => setMobileOpen(true)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 lg:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 shadow-inner-top backdrop-blur-md transition-all hover:bg-white hover:text-brand-600 active:scale-95 lg:hidden"
               aria-label="Buka menu"
             >
               <Menu size={18} />
             </button>
             <div className="min-w-0" data-header-text>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                 <span className="hidden sm:inline">SIAP SMP</span>
                 <span className="hidden sm:inline">/</span>
                 <span>{page.group}</span>
@@ -515,31 +518,31 @@ export function Layout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 md:flex">
+            <div className="hidden items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 shadow-inner-top backdrop-blur-md md:flex">
               <CalendarDays size={14} className="text-brand-500" />
               <div className="leading-tight">
                 <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">Tahun Ajaran</p>
                 <p className="text-[11px] font-bold text-slate-700">{data.settings.academicYear}</p>
               </div>
-              <span className="mx-1 h-6 w-px bg-slate-200" />
+              <span className="mx-1 h-6 w-px bg-slate-200/80" />
               <div className="leading-tight">
                 <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">Semester</p>
                 <p className="text-[11px] font-bold text-brand-600">{data.settings.semester}</p>
               </div>
             </div>
 
-            <div className="hidden items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-[10px] font-semibold text-emerald-700 xl:flex">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            <div className="hidden items-center gap-1.5 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-2 text-[10px] font-semibold text-emerald-700 shadow-sm shadow-emerald-500/5 backdrop-blur-sm xl:flex">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
               {formatDate(today, 'full')}
             </div>
 
             <NotificationsMenu />
-            <div className="hidden h-7 w-px bg-slate-200 sm:block" />
+            <div className="hidden h-7 w-px bg-slate-200/80 sm:block" />
             <ProfileMenu />
           </div>
         </header>
 
-        <main data-content-body className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-10 print:max-w-none print:p-0">
+        <main data-content-body className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8 print:max-w-none print:p-0">
           {!online && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11.5px] font-medium text-amber-700">
               Mode offline: data yang tersimpan di perangkat ini digunakan. Sinkronisasi ke server akan dilakukan saat online kembali.
@@ -562,7 +565,7 @@ export function Layout() {
         </main>
       </div>
 
-      <nav data-mobile-nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg print:hidden lg:hidden">
+      <nav data-mobile-nav className="mobile-nav-glass fixed inset-x-0 bottom-0 z-40 flex pb-[env(safe-area-inset-bottom)] print:hidden lg:hidden">
         {mobileItems.map((item) => {
           const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
           const Icon = item.icon
@@ -571,17 +574,21 @@ export function Layout() {
               key={item.to}
               onClick={() => navigate(item.to)}
               className={cn(
-                'flex flex-1 flex-col items-center gap-1 py-2.5 text-[9.5px] font-semibold transition-transform active:scale-90',
-                active ? '' : 'text-slate-400',
+                'flex flex-1 flex-col items-center gap-1 py-2.5 text-[9.5px] font-semibold transition-all active:scale-90',
+                active ? '' : 'text-slate-400 hover:text-slate-600',
               )}
               style={active ? { color: item.accent } : undefined}
             >
               <span
                 className={cn(
-                  'flex h-7 w-10 items-center justify-center rounded-lg transition-colors',
+                  'flex h-7 w-10 items-center justify-center rounded-lg transition-all',
                   active && 'animate-bounce-soft',
                 )}
-                style={active ? { backgroundColor: `${item.accent}1f` } : undefined}
+                style={
+                  active
+                    ? { backgroundColor: `${item.accent}1f`, boxShadow: `0 8px 20px -12px ${item.accent}` }
+                    : undefined
+                }
               >
                 <Icon size={18} />
               </span>
@@ -591,7 +598,7 @@ export function Layout() {
         })}
         <button
           onClick={() => setMobileOpen(true)}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[9.5px] font-semibold text-slate-400"
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[9.5px] font-semibold text-slate-400 transition-colors hover:text-slate-600"
         >
           <span className="flex h-7 w-10 items-center justify-center rounded-lg">
             <Menu size={18} />

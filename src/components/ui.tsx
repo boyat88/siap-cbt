@@ -38,20 +38,20 @@ type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-600 text-white shadow-sm shadow-brand-600/20 hover:bg-brand-700 focus-visible:ring-brand-500 disabled:bg-brand-300',
+    'btn-primary text-white shadow-glow-blue hover:shadow-glow-lg hover:-translate-y-0.5 focus-visible:ring-brand-500 disabled:bg-none disabled:bg-brand-300 disabled:shadow-none smooth-transition',
   secondary:
-    'bg-navy-900 text-white shadow-sm shadow-navy-900/20 hover:bg-navy-800 focus-visible:ring-navy-700 disabled:bg-navy-400',
+    'bg-gradient-to-br from-navy-900 to-navy-800 text-white shadow-sm shadow-navy-900/25 hover:from-navy-800 hover:to-navy-700 hover:shadow-lift focus-visible:ring-navy-700 disabled:bg-navy-400',
   outline:
-    'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-brand-400',
+    'border border-slate-200/80 bg-white/80 text-slate-700 shadow-sm shadow-slate-900/[0.04] backdrop-blur-md hover:border-brand-200 hover:bg-white hover:text-brand-700 hover:shadow-glow-sm focus-visible:ring-brand-400',
   ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-300',
-  danger: 'bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-400 disabled:bg-rose-300',
-  soft: 'bg-brand-50 text-brand-700 hover:bg-brand-100 focus-visible:ring-brand-300',
+  danger: 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-sm shadow-rose-600/25 hover:from-rose-600 hover:to-rose-700 hover:shadow-glow focus-visible:ring-rose-400 disabled:bg-rose-300',
+  soft: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 hover:bg-brand-100 hover:shadow-glow-sm focus-visible:ring-brand-300',
 }
 
 const buttonSizes: Record<ButtonSize, string> = {
   sm: 'h-9 px-3 text-xs gap-1.5 rounded-lg',
   md: 'h-10 px-4 text-sm gap-2 rounded-xl',
-  lg: 'h-12 px-5 text-sm gap-2 rounded-xl',
+  lg: 'h-12 px-5 text-sm gap-2 rounded-[14px]',
   icon: 'h-10 w-10 rounded-xl',
 }
 
@@ -73,7 +73,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70',
+        'inline-flex select-none items-center justify-center font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70',
         buttonVariants[variant],
         buttonSizes[size],
         className,
@@ -93,7 +93,7 @@ export function Button({
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white shadow-card transition-shadow duration-300 hover:shadow-lift', className)}>
+    <div className={cn('glass-card hover-lift', className)}>
       {children}
     </div>
   )
@@ -112,9 +112,12 @@ export function CardHeader({
 }) {
   return (
     <div className={cn('flex flex-wrap items-start justify-between gap-3 px-5 pt-5', className)}>
-      <div>
-        <h3 className="text-[15px] font-bold text-navy-950">{title}</h3>
-        {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
+      <div className="flex items-start gap-2.5">
+        <span className="mt-[3px] h-3.5 w-1 shrink-0 rounded-full bg-gradient-to-b from-brand-300 via-brand-500 to-brand-700 shadow-[0_0_10px_rgb(var(--brand-400)/0.6)]" />
+        <div>
+          <h3 className="text-[15px] font-bold tracking-tight text-navy-950">{title}</h3>
+          {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
+        </div>
       </div>
       {action}
     </div>
@@ -136,7 +139,10 @@ export function PageHeader({
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         {eyebrow && (
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-600">{eyebrow}</p>
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-600 shadow-sm shadow-brand-500/5">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-400)/0.9)]" />
+            {eyebrow}
+          </p>
         )}
         <h1 className="text-xl font-bold tracking-tight text-navy-950 sm:text-2xl">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>}
@@ -233,7 +239,7 @@ export function Avatar({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold ring-2 ring-white',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold ring-2 ring-white/90 shadow-sm shadow-navy-950/10',
         !src && avatarPalette[index],
         sizes[size],
         className,
@@ -253,7 +259,7 @@ export function Avatar({
 /* ------------------------------------------------------------------ */
 
 const fieldBase =
-  'w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400'
+  'w-full rounded-xl border border-white/70 bg-white/80 px-3.5 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur-md placeholder:text-slate-400 transition-all focus:border-brand-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/15 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400'
 
 export function Label({
   htmlFor,
@@ -402,8 +408,10 @@ export function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
-          checked ? 'bg-brand-600' : 'bg-slate-200',
+          'relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
+          checked
+            ? 'bg-gradient-to-r from-brand-500 to-brand-600 shadow-[0_0_16px_-4px_rgb(var(--brand-500)/0.8)]'
+            : 'bg-slate-200 shadow-inner',
         )}
       >
         <span
@@ -458,24 +466,25 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-6">
-      <div className="absolute inset-0 bg-navy-950/50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-md" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative z-10 max-h-[92vh] w-full animate-fade-up overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl',
+          'relative z-10 max-h-[92vh] w-full animate-scale-in overflow-hidden rounded-t-[26px] border border-white/70 bg-white shadow-2xl backdrop-blur-2xl sm:rounded-[26px]',
           sizes[size],
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <span className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-brand-400/70 to-transparent" />
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100/90 px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-base font-bold text-navy-950">{title}</h2>
+            <h2 className="text-base font-bold tracking-tight text-navy-950">{title}</h2>
             {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 active:scale-90"
             aria-label="Tutup"
           >
             <X size={18} />
@@ -542,7 +551,7 @@ export function Pagination({
         <button
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/80 bg-white/70 text-slate-500 backdrop-blur-sm transition-all hover:border-brand-200 hover:bg-white hover:text-brand-600 hover:shadow-glow-sm disabled:opacity-40"
           aria-label="Halaman sebelumnya"
         >
           <ChevronLeft size={15} />
@@ -557,9 +566,9 @@ export function Pagination({
               key={p}
               onClick={() => onPageChange(p)}
               className={cn(
-                'flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-semibold transition-colors',
+                'flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-semibold transition-all',
                 p === page
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow-sm'
                   : 'border border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50',
               )}
             >
@@ -570,7 +579,7 @@ export function Pagination({
         <button
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/80 bg-white/70 text-slate-500 backdrop-blur-sm transition-all hover:border-brand-200 hover:bg-white hover:text-brand-600 hover:shadow-glow-sm disabled:opacity-40"
           aria-label="Halaman berikutnya"
         >
           <ChevronRight size={15} />
@@ -597,7 +606,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 shadow-inner-top ring-1 ring-white/70">
         {icon || <Info size={22} />}
       </div>
       <p className="text-sm font-semibold text-slate-700">{title}</p>
@@ -644,7 +653,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="pointer-events-auto flex animate-slide-in items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lift"
+            className="pointer-events-auto flex animate-slide-in items-start gap-3 rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-lift backdrop-blur-xl"
           >
             {icons[toast.type]}
             <p className="flex-1 text-[13px] font-medium leading-snug text-slate-700">{toast.message}</p>
@@ -689,7 +698,7 @@ export function ProgressRing({
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#eef2f7" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgb(var(--brand-100))" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -718,7 +727,7 @@ export function Alert({
   children?: ReactNode
 }) {
   const styles = {
-    info: 'border-brand-200 bg-brand-50 text-brand-800',
+    info: 'border-brand-200 bg-brand-50 text-brand-800 shadow-glow-sm',
     warning: 'border-amber-200 bg-amber-50 text-amber-800',
     danger: 'border-rose-200 bg-rose-50 text-rose-800',
     success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
@@ -730,7 +739,7 @@ export function Alert({
     success: <CheckCircle2 size={17} className="text-emerald-500" />,
   }
   return (
-    <div className={cn('flex gap-3 rounded-xl border px-4 py-3', styles[tone])}>
+    <div className={cn('flex gap-3 rounded-xl border px-4 py-3 backdrop-blur-sm', styles[tone])}>
       <div className="mt-0.5">{icons[tone]}</div>
       <div>
         <p className="text-xs font-bold">{title}</p>

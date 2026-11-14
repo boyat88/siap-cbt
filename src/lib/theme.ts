@@ -104,7 +104,7 @@ export const backgroundPresets: BackgroundPreset[] = [
     id: 'aurora',
     name: 'Aurora',
     image:
-      'radial-gradient(1100px 620px at 8% -10%, rgb(var(--brand-400) / 0.42), transparent 62%), radial-gradient(900px 700px at 92% 8%, rgba(168, 85, 247, 0.3), transparent 60%), radial-gradient(1000px 800px at 55% 110%, rgba(56, 189, 248, 0.34), transparent 62%), linear-gradient(150deg, #f4f8ff 0%, #f8fafc 50%, #eef6ff 100%)',
+      'radial-gradient(1150px 680px at 6% -12%, rgb(var(--brand-400) / 0.52), transparent 60%), radial-gradient(950px 760px at 97% 2%, rgba(99, 102, 241, 0.3), transparent 60%), radial-gradient(1000px 820px at 52% 112%, rgba(56, 189, 248, 0.4), transparent 62%), radial-gradient(680px 480px at 72% 16%, rgba(255, 255, 255, 0.72), transparent 62%), linear-gradient(158deg, #f6faff 0%, #eaf2ff 42%, #f8fafc 72%, #e6f1ff 100%)',
     size: 'cover',
     position: 'center',
     repeat: 'no-repeat',
@@ -196,8 +196,8 @@ export const backgroundPresets: BackgroundPreset[] = [
 export const defaultTheme: AppTheme = {
   color: '#257ee5',
   colorId: 'biru',
-  glass: 14,
-  blur: 14,
+  glass: 40,
+  blur: 20,
   background: defaultBackground,
   mode: 'default',
 }

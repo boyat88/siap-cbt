@@ -10,6 +10,9 @@ Folder ini berisi skrip untuk menjaga aplikasi tetap bisa dibuka kapan saja.
 | `scripts/stop-server.cmd` | Mematikan server untuk sementara (termasuk pembungkus yang menyalakannya ulang). |
 | `scripts/matikan-server-permanen.cmd` | Mematikan server permanen: menghentikan proses, menghapus auto-start, dan menonaktifkan shortcut. Data tidak dihapus. |
 | `scripts/open-app.ps1` | Membuka aplikasi di tab browser biasa. Menyalakan server lebih dulu bila belum berjalan, dengan pengecekan TCP cepat sehingga aplikasi terbuka dalam waktu kurang dari 1 detik. Browser dipilih otomatis: **Edge**, lalu Chrome, lalu browser Chromium lain, lalu browser default. |
+| `scripts/buka-siap.cmd` | Versi tanpa PowerShell dari `open-app.ps1`: cek server lewat Node, nyalakan bila perlu, lalu buka browser. Cocok saat PowerShell diblokir kebijakan Windows. |
+| `scripts/start-server-senyap.vbs` | Menyalakan server tanpa jendela console. Dipakai pintasan auto-start di folder Startup. |
+| `scripts/buat-shortcut-siap.vbs` | Membuat pintasan Desktop, Start Menu, dan auto-start tanpa PowerShell. Cukup klik dua kali. |
 | `scripts/create-shortcut.ps1` | Membuat shortcut `SIAP SMP` di Desktop dan Start Menu beserta ikonnya. |
 | `scripts/pindah-laptop.ps1` | Membuat paket ZIP siap pindah laptop (aplikasi + data + Node.js portabel). |
 | `scripts/pasang-di-laptop-baru.ps1` | Memasang paket di laptop baru: auto-start, shortcut, server, dan info alamat LAN. |
@@ -183,6 +186,27 @@ absensi, pengaturan sekolah, foto, dan akun guru.
    Pengaturan Tampilan Perangkat → Unduh Pengaturan (JSON)**, lalu pulihkan file
    itu di laptop baru. Data utama tidak perlu diimpor ulang.
 
+## Jika PowerShell diblokir Windows
+
+Sebagian komputer sekolah memblokir PowerShell dengan pesan *"This operation has
+been cancelled due to restrictions in effect on this computer"*. Aplikasi tetap
+bisa dipakai tanpa PowerShell:
+
+```cmd
+:: nyalakan server (bila perlu) + buka browser
+scripts\buka-siap.cmd
+```
+
+Untuk membuat pintasan Desktop, Start Menu, dan auto-start saat login, klik dua
+kali:
+
+```cmd
+scripts\buat-shortcut-siap.vbs
+```
+
+Bila Windows menolak menjalankan file dari internet, klik kanan file →
+**Properties** → centang **Unblock** → **OK**.
+
 ## Membuat ulang shortcut
 
 Jika shortcut terhapus atau folder aplikasi dipindahkan, jalankan dari folder
@@ -191,6 +215,8 @@ aplikasi:
 ```cmd
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\create-shortcut.ps1
 ```
+
+Tanpa PowerShell, klik dua kali `scripts\buat-shortcut-siap.vbs`.
 
 Ikon shortcut memakai `public\app-icon.ico` (cadangan: `public\siap.ico`).
 
