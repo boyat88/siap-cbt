@@ -1,6 +1,12 @@
-import { jsPDF } from 'jspdf'
 import type { CbtExam } from '../types'
 import type { Student } from '../types'
+
+type JsPdfModule = typeof import('jspdf')
+let jspdfPromise: Promise<JsPdfModule> | null = null
+function loadJsPdf(): Promise<JsPdfModule> {
+  if (!jspdfPromise) jspdfPromise = import('jspdf')
+  return jspdfPromise
+}
 
 export interface ExamCardInfo {
   exam: CbtExam
@@ -167,6 +173,7 @@ export async function generateExamCardPdf(info: ExamCardInfo): Promise<void> {
   const semesterLine = semester ? `Semester ${semester}` : ''
   const printLocation = info.printLocation ?? 'Cikatomas'
 
+  const { jsPDF } = await loadJsPdf()
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = 210
   const pageH = 297

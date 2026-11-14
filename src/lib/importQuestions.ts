@@ -1,5 +1,11 @@
 import type { CbtQuestion } from '../types'
-import * as XLSX from 'xlsx'
+
+type XlsxModule = typeof import('xlsx')
+let xlsxPromise: Promise<XlsxModule> | null = null
+function loadXlsx(): Promise<XlsxModule> {
+  if (!xlsxPromise) xlsxPromise = import('xlsx')
+  return xlsxPromise
+}
 
 /**
  * Pustaka berat (mammoth, pdfjs) dimuat secara lazy agar halaman editor
@@ -41,6 +47,7 @@ function imgTag(dataUrl: string, alt = 'gambar'): string {
  * Opsi boleh berisi HTML/gambar base64.
  */
 export async function importFromExcel(file: File): Promise<CbtQuestion[]> {
+  const XLSX = await loadXlsx()
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
   const sheetName = workbook.SheetNames[0]

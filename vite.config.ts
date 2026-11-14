@@ -451,6 +451,18 @@ function createStateApi(): Plugin {
 }
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-charts': ['recharts'],
+        },
+      },
+    },
+    // Reduce chunk size warnings
+    chunkSizeWarningLimit: 600,
+  },
   define: {
     __DEFINES__: {},
     __HMR_CONFIG_NAME__: '""',

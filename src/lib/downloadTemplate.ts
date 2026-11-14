@@ -1,5 +1,16 @@
-import * as XLSX from 'xlsx'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
+type XlsxModule = typeof import('xlsx')
+let xlsxPromise: Promise<XlsxModule> | null = null
+function loadXlsx(): Promise<XlsxModule> {
+  if (!xlsxPromise) xlsxPromise = import('xlsx')
+  return xlsxPromise
+}
+
+type DocxModule = typeof import('docx')
+let docxPromise: Promise<DocxModule> | null = null
+function loadDocx(): Promise<DocxModule> {
+  if (!docxPromise) docxPromise = import('docx')
+  return docxPromise
+}
 
 /** Helper untuk mengunduh Blob sebagai file. */
 function downloadBlob(blob: Blob, filename: string): void {
@@ -18,6 +29,7 @@ function downloadBlob(blob: Blob, filename: string): void {
  * Format kolom: No | Tipe | Stimulus | Pertanyaan | Opsi A | Opsi B | Opsi C | Opsi D | Jawaban | Poin
  */
 export async function downloadExcelTemplate(): Promise<void> {
+  const XLSX = await loadXlsx()
   const header = ['No', 'Tipe', 'Instruksi Bagian', 'Stimulus', 'Pertanyaan', 'Opsi A', 'Opsi B', 'Opsi C', 'Opsi D', 'Jawaban', 'Poin']
   const rows: (string | number)[][] = [
     header,
@@ -80,6 +92,7 @@ export async function downloadExcelTemplate(): Promise<void> {
  * Format: soal bernomor (1., 2., ...) dengan opsi A/B/C/D.
  */
 export async function downloadWordTemplate(): Promise<void> {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await loadDocx()
   const doc = new Document({
     sections: [
       {
