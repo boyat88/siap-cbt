@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -436,6 +436,31 @@ export function Layout() {
   const page = resolvePageTitle(location.pathname)
   const mobileItems = visibleMobileNav(user?.role, hiddenMenus)
 
+  // Urutan menu dipakai untuk menentukan arah transisi (maju: geser dari kanan).
+  const navOrder = useMemo(
+    () => visibleNavGroups(user?.role, hiddenMenus).flatMap((group) => group.items.map((item) => item.to)),
+    [user?.role, hiddenMenus],
+  )
+  const navIndex = useMemo(() => {
+    const exact = navOrder.indexOf(location.pathname)
+    if (exact !== -1) return exact
+    return navOrder.findIndex((to) => location.pathname.startsWith(`${to}/`))
+  }, [navOrder, location.pathname])
+  const prevNavIndexRef = useRef<number | null>(null)
+  const slideDirection =
+    prevNavIndexRef.current !== null && navIndex !== -1 && prevNavIndexRef.current !== -1
+      ? Math.sign(navIndex - prevNavIndexRef.current)
+      : 0
+  const pageTransitionClass =
+    slideDirection > 0
+      ? 'animate-page-slide-left'
+      : slideDirection < 0
+        ? 'animate-page-slide-right'
+        : 'animate-page-in'
+  useEffect(() => {
+    prevNavIndexRef.current = navIndex
+  }, [navIndex])
+
   useEffect(() => {
     try {
       localStorage.setItem(SIDEBAR_KEY, sidebarHidden ? '1' : '0')
@@ -567,26 +592,26 @@ export function Layout() {
           </div>
         </header>
 
-        <main data-content-body className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8 print:max-w-none print:p-0">
+        <main data-content-body className="mx-auto w-full max-w-[1480px] overflow-x-clip px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8 print:max-w-none print:p-0">
           {!online && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11.5px] font-medium text-amber-700">
               Mode offline: data yang tersimpan di perangkat ini digunakan. Sinkronisasi ke server akan dilakukan saat online kembali.
             </div>
           )}
-          <div key={location.pathname} className="animate-page-in">
-            <Suspense
-              fallback={
-                <div className="flex min-h-[50vh] items-center justify-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-brand-500/25 border-t-brand-600" />
-                    <span className="text-xs font-semibold text-slate-500">Memuat halaman…</span>
-                  </div>
+          <Suspense
+            fallback={
+              <div className="flex min-h-[50vh] items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-brand-500/25 border-t-brand-600" />
+                  <span className="text-xs font-semibold text-slate-500">Memuat halaman…</span>
                 </div>
-              }
-            >
+              </div>
+            }
+          >
+            <div key={location.pathname} className={pageTransitionClass}>
               <Outlet />
-            </Suspense>
-          </div>
+            </div>
+          </Suspense>
         </main>
       </div>
 
