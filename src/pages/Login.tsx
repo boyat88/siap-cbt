@@ -221,7 +221,7 @@ export function Login() {
                 name="email"
                 autoComplete="email"
                 placeholder="nama@smpn1cikatomas.sch.id"
-                icon={<Mail size={16} />}
+                icon={<Mail size={16} className="text-brand-500" />}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value)
