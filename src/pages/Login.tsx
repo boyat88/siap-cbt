@@ -156,7 +156,7 @@ export function Login() {
 
         <div className="relative z-10 my-auto w-full py-6">
           <div
-            className="relative mb-5 animate-login-in"
+            className="relative mb-5 -mx-6 animate-login-in xl:-mx-8"
             style={{ animationDelay: '140ms' }}
           >
             <div className="pointer-events-none absolute -left-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
@@ -164,7 +164,7 @@ export function Login() {
             <img
               src="/images/poster-pendidikan-2026.jpg"
               alt="Poster Pendidikan Digital Indonesia 2026"
-              className="relative mx-auto h-auto max-h-[40vh] w-full rounded-2xl object-contain shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)] ring-1 ring-white/15"
+              className="relative aspect-video max-h-[42vh] w-full object-cover shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)]"
             />
           </div>
           <div className="max-w-xl">
