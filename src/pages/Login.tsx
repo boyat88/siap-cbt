@@ -150,12 +150,15 @@ export function Login() {
       </div>
 
       <div className="relative z-10 hidden w-[60%] flex-col overflow-hidden p-6 lg:flex xl:p-8">
-        <div className="relative z-10">
+        <div className="relative z-10 animate-login-in" style={{ animationDelay: '60ms' }}>
           <Brand dark logo="/images/app-logo.png" />
         </div>
 
         <div className="relative z-10 my-auto w-full py-6">
-          <div className="relative mb-4 -mx-6 w-[calc(100%+3rem)] xl:-mx-8 xl:w-[calc(100%+4rem)]">
+          <div
+            className="relative mb-4 -mx-6 w-[calc(100%+3rem)] animate-login-in xl:-mx-8 xl:w-[calc(100%+4rem)]"
+            style={{ animationDelay: '140ms' }}
+          >
     <div className="pointer-events-none absolute left-0 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
     <div className="pointer-events-none absolute right-0 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-3xl" />
     <img
@@ -165,25 +168,25 @@ export function Login() {
     />
   </div>
           <div className="max-w-xl">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold text-brand-200">
+          <div className="mb-5 inline-flex animate-login-in items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold text-brand-200" style={{ animationDelay: '220ms' }}>
             <Sparkles size={12} />
             Absensi digital untuk pendidikan yang lebih baik
           </div>
-          <h1 className="text-[34px] font-extrabold leading-[1.15] tracking-tight text-white xl:text-[42px]">
+          <h1 className="animate-login-in text-[34px] font-extrabold leading-[1.15] tracking-tight text-white xl:text-[42px]" style={{ animationDelay: '280ms' }}>
             Kehadiran tertata,
             <br />
             <span className="bg-gradient-to-r from-brand-300 to-sky-200 bg-clip-text text-transparent">
               masa depan lebih cerah.
             </span>
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-300">
+          <p className="mt-4 max-w-md animate-login-in text-sm leading-relaxed text-slate-300" style={{ animationDelay: '340ms' }}>
             Kelola kehadiran peserta didik SMPN Satu Atap 1 Cikatomas secara cepat, akurat, dan transparan
             dalam satu platform terpadu.
           </p>
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between border-t border-white/20 pt-5 text-[10px] text-white/90 drop-shadow">
+        <div className="relative z-10 flex animate-login-in items-center justify-between border-t border-white/20 pt-5 text-[10px] text-white/90 drop-shadow" style={{ animationDelay: '420ms' }}>
           <span>© 2026 SMPN Satu Atap 1 Cikatomas</span>
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
@@ -193,17 +196,17 @@ export function Login() {
       </div>
 
       <div className="relative z-10 flex w-full flex-col overflow-y-auto lg:w-[40%]">
-        <div className="flex items-center justify-between px-5 py-5 lg:hidden">
+        <div className="flex animate-login-in items-center justify-between px-5 py-5 lg:hidden">
           <Brand dark logo="/images/app-logo.png" />
           <span className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-[9px] font-bold text-white/90">TA 2026/2027</span>
         </div>
 
-        <div className="flex justify-end px-5 pb-2 lg:hidden">
+        <div className="flex animate-login-in justify-end px-5 pb-2 lg:hidden" style={{ animationDelay: '80ms' }}>
           <LoginLogos compact />
         </div>
 
         <div className="flex flex-1 items-center justify-center px-4 py-6 sm:px-8">
-          <div className="w-full max-w-[400px] animate-scale-in rounded-3xl border border-white/60 bg-white/95 p-6 shadow-[0_30px_80px_-20px_rgba(2,10,30,0.65)] backdrop-blur-xl sm:p-7">
+          <div className="w-full max-w-[400px] animate-login-in rounded-3xl border border-white/60 bg-white/95 p-6 shadow-[0_30px_80px_-20px_rgba(2,10,30,0.65)] backdrop-blur-xl sm:p-7" style={{ animationDelay: '160ms' }}>
             <div className="mb-4">
               <div className="mb-2 hidden h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600 lg:flex">
                 <LockKeyhole size={18} />
