@@ -464,32 +464,54 @@ export function Layout() {
     <div data-app-shell className="min-h-screen bg-transparent">
       {routeTick > 1 && <div key={routeTick} className="route-progress print:hidden" />}
       <aside
+        aria-hidden={sidebarHidden}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 h-screen w-[260px] overflow-hidden shadow-[18px_0_60px_-40px_rgba(2,6,23,0.8)] print:hidden glass-sidebar',
-          sidebarHidden ? 'hidden' : 'hidden lg:block',
+          'fixed inset-y-0 left-0 z-40 hidden h-screen w-[260px] overflow-hidden shadow-[18px_0_60px_-40px_rgba(2,6,23,0.8)] transition-transform duration-300 ease-in-out will-change-transform print:hidden lg:block glass-sidebar',
+          sidebarHidden ? '-translate-x-full' : 'translate-x-0',
         )}
         style={{ position: 'fixed', top: 0, bottom: 0 }}
       >
         <SidebarContent />
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-[280px] animate-slide-in overflow-hidden shadow-2xl" style={{ position: 'absolute', top: 0, bottom: 0 }}>
-            <SidebarContent onNavigate={() => setMobileOpen(false)} />
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-5 rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white"
-              aria-label="Tutup menu"
-            >
-              <X size={18} />
-            </button>
-          </aside>
-        </div>
-      )}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 transition-opacity duration-300 ease-out lg:hidden',
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+        aria-hidden={!mobileOpen}
+      >
+        <div
+          className={cn(
+            'absolute inset-0 bg-navy-950/60 backdrop-blur-sm transition-opacity duration-300 ease-out',
+            mobileOpen ? 'opacity-100' : 'opacity-0',
+          )}
+          onClick={() => setMobileOpen(false)}
+        />
+        <aside
+          className={cn(
+            'absolute inset-y-0 left-0 w-[280px] overflow-hidden shadow-2xl transition-transform duration-300 ease-in-out will-change-transform',
+            mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          )}
+          style={{ position: 'absolute', top: 0, bottom: 0 }}
+        >
+          <SidebarContent onNavigate={() => setMobileOpen(false)} />
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="absolute right-3 top-5 rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+            aria-label="Tutup menu"
+          >
+            <X size={18} />
+          </button>
+        </aside>
+      </div>
 
-      <div className={cn('print:pl-0', !sidebarHidden && 'lg:pl-[260px]')}>
+      <div
+        className={cn(
+          'print:pl-0 transition-[padding-left] duration-300 ease-in-out',
+          sidebarHidden ? 'lg:pl-0' : 'lg:pl-[260px]',
+        )}
+      >
         <header data-header-surface className="app-header sticky top-0 z-30 flex h-[72px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 print:hidden" style={theme.headerColor ? { backgroundColor: theme.headerColor } : undefined}>
           <div className="flex min-w-0 items-center gap-3">
             <button
