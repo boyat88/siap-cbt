@@ -99,6 +99,14 @@ export default {
         shimmer: {
           '100%': { transform: 'translateX(100%)' },
         },
+        'bell-swing': {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '15%': { transform: 'rotate(14deg)' },
+          '30%': { transform: 'rotate(-12deg)' },
+          '45%': { transform: 'rotate(9deg)' },
+          '60%': { transform: 'rotate(-6deg)' },
+          '75%': { transform: 'rotate(3deg)' },
+        },
         'ping-soft': {
           '0%': { transform: 'scale(0.9)', opacity: '0.7' },
           '70%': { transform: 'scale(1.6)', opacity: '0' },
@@ -123,6 +131,7 @@ export default {
         'gradient-pan': 'gradient-pan 9s ease infinite',
         'ping-soft': 'ping-soft 1.8s cubic-bezier(0, 0, 0.2, 1) infinite',
         'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
+        'bell-swing': 'bell-swing .8s ease-in-out',
       },
     },
   },

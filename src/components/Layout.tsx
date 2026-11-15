@@ -348,10 +348,10 @@ function NotificationsMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 shadow-inner-top backdrop-blur-md transition-all hover:border-brand-200 hover:bg-slate-50 hover:text-brand-600 hover:shadow-glow-sm active:scale-95"
+        className="group relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 shadow-inner-top backdrop-blur-md transition-all hover:border-brand-200 hover:bg-slate-50 hover:text-brand-600 hover:shadow-glow-sm active:scale-95"
         aria-label="Notifikasi"
       >
-        <Bell size={18} />
+        <Bell size={18} className="origin-top group-hover:animate-bell-swing" />
         {unread > 0 && (
           <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(244,63,94,0.6)]">
             {unread > 9 ? '9+' : unread}
