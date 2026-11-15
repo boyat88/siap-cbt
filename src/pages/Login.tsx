@@ -157,7 +157,12 @@ export function Login() {
         <div className="relative z-10 my-auto w-full py-6">
           <div
             className="relative mb-4 w-full animate-login-in"
-            style={{ animationDelay: '140ms' }}
+            style={{
+              animationDelay: '140ms',
+              // Lebar poster dibatasi agar tingginya ikut menyesuaikan tinggi layar,
+              // sehingga badge, judul, dan deskripsi di bawahnya tetap terlihat.
+              maxWidth: 'min(600px, calc((100vh - 440px) * 1.7778))',
+            }}
           >
             <div className="pointer-events-none absolute -left-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
             <div className="pointer-events-none absolute -right-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-3xl" />
