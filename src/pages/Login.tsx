@@ -156,17 +156,17 @@ export function Login() {
 
         <div className="relative z-10 my-auto w-full py-6">
           <div
-            className="relative mb-4 -mr-6 w-[calc(100%+1.5rem)] animate-login-in xl:-mr-8 xl:w-[calc(100%+2rem)]"
+            className="relative mb-4 -mr-2 w-[calc(100%+0.5rem)] animate-login-in xl:-mr-3 xl:w-[calc(100%+0.75rem)]"
             style={{
               animationDelay: '140ms',
-              // Tepi kanan ditarik sampai batas panel, tetapi lebar tetap dibatasi
-              // pada layar pendek agar teks di bawah banner masih terlihat.
+              // Sedikit melebar ke kanan (masih menyisakan ruang untuk sudut membulat),
+              // dengan batas lebar agar teks di bawah banner tetap terlihat.
               maxWidth: 'calc((100vh - 420px) * 2.2857)',
             }}
           >
             <div className="pointer-events-none absolute -left-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
             <div className="pointer-events-none absolute -right-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-3xl" />
-            <div className="relative aspect-[16/7] w-full overflow-hidden rounded-l-2xl bg-navy-900 shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)] ring-1 ring-white/15">
+            <div className="relative aspect-[16/7] w-full overflow-hidden rounded-2xl bg-navy-900 shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)] ring-1 ring-white/15">
               <img
                 src="/images/banner-siap-cbt.jpg"
                 alt="Banner SIAP SMP - Ujian CBT"
