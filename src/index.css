@@ -1118,6 +1118,66 @@ html[data-menu-fg='dark'] [data-menu-surface] nav a span[style] {
   animation: ping-soft 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+/* Panel tema: membesar (pulse) saat dibuka, mengecil lembut saat ditutup */
+@keyframes theme-panel-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  78% {
+    transform: scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes theme-panel-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.theme-panel-in {
+  animation: theme-panel-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.theme-panel-out {
+  animation: theme-panel-out 0.26s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* Denyut lembut pada tombol tema saat diklik */
+@keyframes theme-trigger-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(var(--brand-500) / 0.5);
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.1);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgb(var(--brand-500) / 0);
+    transform: scale(1);
+  }
+}
+
+.theme-trigger-pulse {
+  animation: theme-trigger-pulse 0.45s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -26,8 +26,19 @@ export function ThemePanel() {
   }
   const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const [closing, setClosing] = useState(false)
   const standardPresets = colorPresets.filter((preset) => !preset.deep)
   const deepPresets = colorPresets.filter((preset) => preset.deep)
+
+  // Tutup dengan animasi mengecil dulu, baru panel dilepas dari layar.
+  const closePanel = () => {
+    if (closing) return
+    setClosing(true)
+    window.setTimeout(() => {
+      setPanelOpen(false)
+      setClosing(false)
+    }, 260)
+  }
 
   const handleImage = async (file: File) => {
     setBusy(true)
@@ -78,7 +89,7 @@ export function ThemePanel() {
     return (
       <button
         onClick={() => setPanelOpen(true)}
-        className="group fixed bottom-20 right-4 z-[75] flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-95 print:hidden lg:bottom-5 lg:right-5"
+        className="group fixed bottom-20 right-4 z-[75] flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-110 print:hidden lg:bottom-5 lg:right-5"
         aria-label="Buka pengaturan tema"
         title="Tema & tampilan"
       >
@@ -89,7 +100,12 @@ export function ThemePanel() {
   }
 
   return (
-    <div className="fixed bottom-20 right-3 z-[76] w-[min(340px,calc(100vw-1.5rem))] origin-bottom-right animate-scale-in overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur-2xl print:hidden lg:bottom-5 lg:right-5">
+    <div
+      className={cn(
+        'fixed bottom-20 right-3 z-[76] w-[min(340px,calc(100vw-1.5rem))] origin-bottom-right overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur-2xl print:hidden lg:bottom-5 lg:right-5',
+        closing ? 'theme-panel-out' : 'theme-panel-in',
+      )}
+    >
       <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-3 py-3 text-white">
         <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
         <div className="relative flex items-center justify-between gap-2">
@@ -115,7 +131,7 @@ export function ThemePanel() {
               <RotateCcw size={15} />
             </button>
             <button
-              onClick={() => setPanelOpen(false)}
+              onClick={closePanel}
               className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/15 hover:text-white"
               aria-label="Tutup panel tema"
             >
