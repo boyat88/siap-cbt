@@ -156,17 +156,17 @@ export function Login() {
 
         <div className="relative z-10 my-auto w-full py-6">
           <div
-            className="relative mb-4 -mx-6 w-[calc(100%+3rem)] animate-login-in xl:-mx-8 xl:w-[calc(100%+4rem)]"
+            className="relative mb-5 animate-login-in"
             style={{ animationDelay: '140ms' }}
           >
-    <div className="pointer-events-none absolute left-0 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
-    <div className="pointer-events-none absolute right-0 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-3xl" />
-    <img
-      src="/images/siap-banner.png"
-      alt="Siswa belajar bersama"
-      className="relative h-auto max-h-[48vh] w-full object-contain [mask-image:linear-gradient(to_right,transparent_0%,black_7%,black_93%,transparent_100%),linear-gradient(to_bottom,black_80%,transparent_100%)] [mask-composite:intersect] [-webkit-mask-composite:source-in]"
-    />
-  </div>
+            <div className="pointer-events-none absolute -left-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
+            <div className="pointer-events-none absolute -right-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-3xl" />
+            <img
+              src="/images/poster-pendidikan-2026.jpg"
+              alt="Poster Pendidikan Digital Indonesia 2026"
+              className="relative mx-auto h-auto max-h-[40vh] w-full rounded-2xl object-contain shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)] ring-1 ring-white/15"
+            />
+          </div>
           <div className="max-w-xl">
           <div className="mb-5 inline-flex animate-login-in items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold text-brand-200" style={{ animationDelay: '220ms' }}>
             <Sparkles size={12} />
