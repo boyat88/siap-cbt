@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import {
   Bell,
   Building2,
@@ -46,16 +47,22 @@ function resolvePageTitle(pathname: string): { title: string; group: string } {
   return { title: 'SIAP SMP', group: 'Sistem' }
 }
 
-function LogoBlock({ logo }: { logo?: string }) {
+function LogoBlock({ logo, collapsed = false }: { logo?: string; collapsed?: boolean }) {
   return (
-    <div className="relative flex h-[80px] items-center border-b border-white/[0.08] px-5">
+    <div
+      className={cn(
+        'relative flex h-[80px] shrink-0 items-center border-b border-white/[0.08]',
+        collapsed ? 'justify-center px-2' : 'px-5',
+      )}
+      title={collapsed ? 'SIAP SMP' : undefined}
+    >
       <span className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-      <Brand dark logo={logo} />
+      <Brand dark compact={collapsed} logo={logo} />
     </div>
   )
 }
 
-function SidebarAccountMenu({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarAccountMenu({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const { user, logout } = useApp()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -82,7 +89,13 @@ function SidebarAccountMenu({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="relative" ref={ref}>
       {open && (
-        <div data-keep-surface className="absolute bottom-full left-0 right-0 z-50 mb-2 origin-bottom animate-fade-up overflow-hidden rounded-xl border border-white/10 bg-navy-900 shadow-2xl">
+        <div
+          data-keep-surface
+          className={cn(
+            'absolute z-50 origin-bottom animate-fade-up overflow-hidden rounded-xl border border-white/10 bg-navy-900 shadow-2xl',
+            collapsed ? 'bottom-0 left-full ml-2 w-64' : 'bottom-full left-0 right-0 mb-2',
+          )}
+        >
           <div className="border-b border-white/[0.07] px-4 py-3">
             <p className="truncate text-xs font-bold text-white">{user?.name}</p>
             <p className="truncate text-[10px] text-slate-400">{user?.email}</p>
@@ -121,66 +134,101 @@ function SidebarAccountMenu({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <button
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2 py-2 text-left transition-all hover:border-white/[0.08] hover:bg-white/[0.07] active:scale-[0.99]"
+        className={cn(
+          'flex w-full items-center rounded-xl border border-transparent py-2 text-left transition-all hover:border-white/[0.08] hover:bg-white/[0.07] active:scale-[0.99]',
+          collapsed ? 'justify-center px-0' : 'gap-2.5 px-2',
+        )}
         aria-label="Menu akun"
+        title={collapsed ? user?.name ?? 'Menu akun' : undefined}
       >
         <Avatar name={user?.name ?? 'Administrator'} src={user?.photo} size="sm" className="ring-navy-900" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-semibold text-slate-100">{user?.name}</p>
-          <p className="text-[9.5px] capitalize text-slate-500">{isAdmin ? 'Administrator' : 'Guru'}</p>
-        </div>
-        <ChevronDown
-          size={13}
-          className={cn('text-slate-500 transition-transform', open && 'rotate-180')}
-        />
+        {!collapsed && (
+          <>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-semibold text-slate-100">{user?.name}</p>
+              <p className="text-[9.5px] capitalize text-slate-500">{isAdmin ? 'Administrator' : 'Guru'}</p>
+            </div>
+            <ChevronDown
+              size={13}
+              className={cn('text-slate-500 transition-transform', open && 'rotate-180')}
+            />
+          </>
+        )}
       </button>
     </div>
   )
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const { data, user, hiddenMenus } = useApp()
   const { theme } = useTheme()
   const location = useLocation()
   const groups = visibleNavGroups(user?.role, hiddenMenus)
+  const [railTip, setRailTip] = useState<{ label: string; x: number; y: number } | null>(null)
+
+  // Tooltip mengikuti posisi ikon dan dirender lewat portal agar tidak terpotong
+  // oleh area gulir menu saat sidebar dalam mode ringkas.
+  const showRailTip = (label: string, element: HTMLElement) => {
+    if (!collapsed) return
+    const rect = element.getBoundingClientRect()
+    setRailTip({ label, x: rect.right + 12, y: rect.top + rect.height / 2 })
+  }
 
   return (
     <div
       data-menu-surface
-      className="relative flex h-full flex-col overflow-hidden bg-navy-950"
+      className={cn(
+        'relative flex h-full flex-col bg-navy-950',
+        collapsed ? 'overflow-visible' : 'overflow-hidden',
+      )}
       style={theme.menuColor ? { backgroundColor: theme.menuColor } : undefined}
     >
       <div className="sidebar-glow pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top_right,rgba(96,165,250,0.28),transparent_65%)]" />
       <div className="sidebar-glow pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-[radial-gradient(ellipse_at_bottom_left,rgba(56,189,248,0.2),transparent_68%)]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-white/10 via-white/[0.04] to-transparent" />
-      <LogoBlock logo={data.settings.appLogo} />
+      <LogoBlock logo={data.settings.appLogo} collapsed={collapsed} />
 
-      <div className="px-3 pt-4">
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.06] p-3 shadow-inner-top backdrop-blur-md">
-          <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400/30 to-brand-600/20 text-brand-200 shadow-glow-sm ring-1 ring-inset ring-white/10">
-              <Building2 size={15} />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[11px] font-semibold leading-snug text-white">{data.settings.school.name}</p>
-              <p className="mt-0.5 text-[9.5px] text-slate-400">NPSN {data.settings.school.npsn}</p>
+      {!collapsed && (
+        <div className="px-3 pt-4">
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.06] p-3 shadow-inner-top backdrop-blur-md">
+            <div className="flex items-start gap-2.5">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400/30 to-brand-600/20 text-brand-200 shadow-glow-sm ring-1 ring-inset ring-white/10">
+                <Building2 size={15} />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-semibold leading-snug text-white">{data.settings.school.name}</p>
+                <p className="mt-0.5 text-[9.5px] text-slate-400">NPSN {data.settings.school.npsn}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <nav className="relative mt-4 space-y-5 overflow-y-auto overscroll-contain px-3 pb-4" style={{ maxHeight: 'calc(100vh - 230px)', overflowY: 'auto', overscrollBehavior: 'contain' }}>
+      <nav
+        className={cn(
+          'relative mt-4 overflow-y-auto overscroll-contain pb-4',
+          collapsed ? 'space-y-4 px-2' : 'space-y-5 px-3',
+        )}
+        style={{ maxHeight: 'calc(100vh - 230px)', overflowY: 'auto', overscrollBehavior: 'contain' }}
+      >
         {groups.map((group) => {
           const items = group.items
           return (
             <div key={group.label}>
-              <p className="mb-1.5 flex items-center gap-1.5 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: group.items[0]?.accent ?? '#64748b' }}
-                />
-                {group.label}
-              </p>
+              {collapsed ? (
+                <>
+                  <span className="sr-only">{group.label}</span>
+                  <div className="mx-auto mb-2 h-px w-7 bg-white/[0.09]" aria-hidden="true" />
+                </>
+              ) : (
+                <p className="mb-1.5 flex items-center gap-1.5 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: group.items[0]?.accent ?? '#64748b' }}
+                  />
+                  {group.label}
+                </p>
+              )}
               <div className="space-y-0.5">
                 {items.map((item) => {
                   const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
@@ -190,8 +238,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       key={item.to}
                       to={item.to}
                       onClick={onNavigate}
+                      onMouseEnter={(event) => showRailTip(item.label, event.currentTarget)}
+                      onMouseLeave={() => setRailTip(null)}
+                      onFocus={(event) => showRailTip(item.label, event.currentTarget)}
+                      onBlur={() => setRailTip(null)}
                       className={cn(
-                        'nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[12.5px] font-medium transition-all',
+                        'nav-link group relative flex items-center rounded-xl text-[12.5px] font-medium transition-all',
+                        collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5',
                         active ? 'text-white' : 'text-slate-400 hover:bg-white/[0.045] hover:text-slate-100',
                       )}
                       style={
@@ -205,7 +258,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     >
                       {active && (
                         <span
-                          className="absolute -left-3 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full"
+                          className={cn(
+                            'absolute top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full',
+                            collapsed ? '-left-2' : '-left-3',
+                          )}
                           style={{ backgroundColor: item.accent, boxShadow: `0 0 12px ${item.accent}` }}
                         />
                       )}
@@ -222,18 +278,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       >
                         <Icon size={16} />
                       </span>
-                      <span className="flex-1">{item.label}</span>
-                      {item.to === '/absensi' && (
-                        <span
-                          className="rounded-md px-1.5 py-0.5 text-[9px] font-bold"
-                          style={
-                            active
-                              ? { backgroundColor: `${item.accent}30`, color: 'var(--menu-ink, #ffffff)' }
-                              : { backgroundColor: 'rgba(255,255,255,0.06)', color: item.accent }
-                          }
-                        >
-                          Harian
-                        </span>
+                      {!collapsed && (
+                        <>
+                          <span className="flex-1">{item.label}</span>
+                          {item.to === '/absensi' && (
+                            <span
+                              className="rounded-md px-1.5 py-0.5 text-[9px] font-bold"
+                              style={
+                                active
+                                  ? { backgroundColor: `${item.accent}30`, color: 'var(--menu-ink, #ffffff)' }
+                                  : { backgroundColor: 'rgba(255,255,255,0.06)', color: item.accent }
+                              }
+                            >
+                              Harian
+                            </span>
+                          )}
+                        </>
                       )}
                     </NavLink>
                   )
@@ -244,9 +304,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="relative mt-4 border-t border-white/[0.06] px-3 pb-4 pt-3">
-        <SidebarAccountMenu onNavigate={onNavigate} />
+      <div className={cn('relative mt-4 border-t border-white/[0.06] pb-4 pt-3', collapsed ? 'px-2' : 'px-3')}>
+        <SidebarAccountMenu onNavigate={onNavigate} collapsed={collapsed} />
       </div>
+
+      {railTip &&
+        createPortal(
+          <span
+            role="tooltip"
+            className="pointer-events-none fixed z-[90] -translate-y-1/2 animate-fade-in whitespace-nowrap rounded-lg border border-white/10 bg-navy-900/95 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-xl backdrop-blur-md"
+            style={{ left: railTip.x, top: railTip.y }}
+          >
+            {railTip.label}
+          </span>,
+          document.body,
+        )}
     </div>
   )
 }
@@ -420,7 +492,7 @@ const SIDEBAR_KEY = 'siap-absensi-sidebar-v1'
 export function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
-  const [sidebarHidden, setSidebarHidden] = useState<boolean>(() => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(SIDEBAR_KEY) === '1'
     } catch {
@@ -463,13 +535,13 @@ export function Layout() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(SIDEBAR_KEY, sidebarHidden ? '1' : '0')
+      localStorage.setItem(SIDEBAR_KEY, sidebarCollapsed ? '1' : '0')
     } catch {
       // Abaikan jika localStorage tidak tersedia.
     }
     // Dipakai CSS agar foto latar tidak masuk ke area menu samping.
-    document.documentElement.dataset.sidebar = sidebarHidden ? 'hidden' : 'open'
-  }, [sidebarHidden])
+    document.documentElement.dataset.sidebar = sidebarCollapsed ? 'collapsed' : 'open'
+  }, [sidebarCollapsed])
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine)
@@ -492,14 +564,13 @@ export function Layout() {
     <div data-app-shell className="min-h-screen bg-transparent">
       {routeTick > 1 && <div key={routeTick} className="route-progress print:hidden" />}
       <aside
-        aria-hidden={sidebarHidden}
         className={cn(
-          'fixed inset-y-0 left-0 z-40 hidden h-screen w-[260px] overflow-hidden shadow-[18px_0_60px_-40px_rgba(2,6,23,0.8)] transition-transform duration-300 ease-in-out will-change-transform print:hidden lg:block glass-sidebar',
-          sidebarHidden ? '-translate-x-full' : 'translate-x-0',
+          'fixed inset-y-0 left-0 z-40 hidden h-screen w-[260px] shadow-[18px_0_60px_-40px_rgba(2,6,23,0.8)] transition-[width] duration-300 ease-in-out will-change-[width] print:hidden lg:block glass-sidebar',
+          sidebarCollapsed ? 'overflow-visible lg:w-[76px]' : 'overflow-hidden lg:w-[260px]',
         )}
         style={{ position: 'fixed', top: 0, bottom: 0 }}
       >
-        <SidebarContent />
+        <SidebarContent collapsed={sidebarCollapsed} />
       </aside>
 
       <div
@@ -537,18 +608,18 @@ export function Layout() {
       <div
         className={cn(
           'print:pl-0 transition-[padding-left] duration-300 ease-in-out',
-          sidebarHidden ? 'lg:pl-0' : 'lg:pl-[260px]',
+          sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-[260px]',
         )}
       >
         <header data-header-surface className="app-header sticky top-0 z-30 flex h-[72px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 print:hidden" style={theme.headerColor ? { backgroundColor: theme.headerColor } : undefined}>
           <div className="flex min-w-0 items-center gap-3">
             <button
-              onClick={() => setSidebarHidden((hidden) => !hidden)}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
               className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-500 shadow-inner-top backdrop-blur-md transition-all hover:border-brand-200 hover:bg-slate-50 hover:text-brand-600 hover:shadow-glow-sm active:scale-95 lg:flex"
-              aria-label={sidebarHidden ? 'Tampilkan menu samping' : 'Sembunyikan menu samping'}
-              title={sidebarHidden ? 'Tampilkan menu' : 'Sembunyikan menu'}
+              aria-label={sidebarCollapsed ? 'Perbesar menu samping' : 'Perkecil menu samping'}
+              title={sidebarCollapsed ? 'Perbesar menu' : 'Perkecil menu'}
             >
-              {sidebarHidden ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+              {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>
             <button
               onClick={() => setMobileOpen(true)}

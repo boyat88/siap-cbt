@@ -575,6 +575,10 @@ html[data-app-bg='image'][data-glass='on'] .bg-slate-50:not([data-app-shell]) {
   html[data-app-bg='image'][data-sidebar='open'] body::before {
     left: 260px;
   }
+
+  html[data-app-bg='image'][data-sidebar='collapsed'] body::before {
+    left: 76px;
+  }
 }
 
 /* Menu samping tetap pekat (tidak ikut transparan) saat memakai foto latar. */
