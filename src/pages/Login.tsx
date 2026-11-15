@@ -159,18 +159,20 @@ export function Login() {
             className="relative mb-4 w-full animate-login-in"
             style={{
               animationDelay: '140ms',
-              // Lebar poster dibatasi agar tingginya ikut menyesuaikan tinggi layar,
-              // sehingga badge, judul, dan deskripsi di bawahnya tetap terlihat.
-              maxWidth: 'min(600px, calc((100vh - 440px) * 1.7778))',
+              // Lebar bingkai dibatasi agar tinggi banner (rasio 16:7) tetap
+              // menyisakan ruang untuk badge, judul, dan deskripsi di bawahnya.
+              maxWidth: 'min(660px, calc((100vh - 460px) * 2.2857))',
             }}
           >
             <div className="pointer-events-none absolute -left-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-sky-300/25 blur-3xl" />
             <div className="pointer-events-none absolute -right-6 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-3xl" />
-            <img
-              src="/images/poster-pendidikan-2026.jpg"
-              alt="Poster Pendidikan Digital Indonesia 2026"
-              className="relative h-auto w-full rounded-2xl object-contain shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)] ring-1 ring-white/15"
-            />
+            <div className="relative aspect-[16/7] w-full overflow-hidden rounded-2xl bg-navy-900 shadow-[0_18px_50px_-20px_rgba(2,10,30,0.85)] ring-1 ring-white/15">
+              <img
+                src="/images/banner-siap-cbt.jpg"
+                alt="Banner SIAP SMP - Ujian CBT"
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            </div>
           </div>
           <div className="max-w-xl">
           <div className="mb-5 inline-flex animate-login-in items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-semibold text-brand-200" style={{ animationDelay: '220ms' }}>
