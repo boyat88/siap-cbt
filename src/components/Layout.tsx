@@ -21,6 +21,7 @@ import { useApp } from '../store/AppContext'
 import { useTheme } from '../store/ThemeContext'
 import { visibleMobileNav, visibleNavGroups } from '../lib/navigation'
 import { formatDate, relativeTime, toISODate } from '../lib/utils'
+import { attachGlobalRipple } from '../lib/ripple'
 
 const pageTitles: Record<string, { title: string; group: string }> = {
   '/dashboard': { title: 'Dashboard', group: 'Ringkasan' },
@@ -459,6 +460,8 @@ export function Layout() {
     const timer = window.setInterval(() => setToday(toISODate(new Date())), 60000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => attachGlobalRipple(), [])
 
   return (
     <div data-app-shell className="min-h-screen bg-transparent">

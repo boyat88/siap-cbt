@@ -5,6 +5,7 @@ import {
   useState,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
+  type PointerEvent,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
@@ -61,6 +62,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
 }
 
+/** Nomor unik untuk setiap gelombang ripple tombol. */
+let rippleSeq = 0
+
+interface Ripple {
+  id: number
+  x: number
+  y: number
+  size: number
+}
+
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -68,19 +79,45 @@ export function Button({
   className,
   children,
   disabled,
+  onPointerDown,
   ...props
 }: ButtonProps) {
+  const [ripples, setRipples] = useState<Ripple[]>([])
+
+  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    onPointerDown?.(event)
+    if (disabled || loading || event.button !== 0) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const size = Math.max(rect.width, rect.height) * 2.2
+    const id = ++rippleSeq
+    setRipples((prev) => [
+      ...prev.slice(-3),
+      { id, x: event.clientX - rect.left - size / 2, y: event.clientY - rect.top - size / 2, size },
+    ])
+    window.setTimeout(() => setRipples((prev) => prev.filter((ripple) => ripple.id !== id)), 650)
+  }
+
   return (
     <button
       className={cn(
-        'inline-flex select-none items-center justify-center font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70',
+        'relative inline-flex select-none items-center justify-center overflow-hidden font-semibold transition-all hover:brightness-[1.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70',
         buttonVariants[variant],
         buttonSizes[size],
         className,
       )}
       disabled={disabled || loading}
+      onPointerDown={handlePointerDown}
+      data-global-ripple="off"
       {...props}
     >
+      {ripples.map((ripple) => (
+        <span
+          key={ripple.id}
+          aria-hidden="true"
+          className="btn-ripple"
+          style={{ left: ripple.x, top: ripple.y, width: ripple.size, height: ripple.size }}
+        />
+      ))}
       {loading && <Loader2 size={15} className="animate-spin" />}
       {children}
     </button>
