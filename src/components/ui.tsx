@@ -295,7 +295,9 @@ export function Input({ label, error, hint, icon, className, id, ...props }: Inp
         </Label>
       )}
       <div className="relative">
-        {icon && <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-500">{icon}</span>}
+        {icon && (
+          <span className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-brand-500">{icon}</span>
+        )}
         <input
           id={inputId}
           className={cn(fieldBase, 'h-11', Boolean(icon) && 'pl-10', error && 'border-rose-300 focus:border-rose-400 focus:ring-rose-100', className)}
