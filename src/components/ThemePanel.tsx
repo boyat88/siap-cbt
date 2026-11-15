@@ -59,7 +59,7 @@ export function ThemePanel() {
         key={preset.id}
         onClick={() => setColor(preset.color, preset.id)}
         className={cn(
-          'group relative flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95',
+          'group relative flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95',
           active ? 'ring-navy-900' : 'ring-transparent',
         )}
         style={{ backgroundColor: preset.color }}
@@ -78,28 +78,28 @@ export function ThemePanel() {
     return (
       <button
         onClick={() => setPanelOpen(true)}
-        className="group fixed bottom-20 right-4 z-[75] flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-95 print:hidden lg:bottom-6 lg:right-6"
+        className="group fixed bottom-20 right-4 z-[75] flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-95 print:hidden lg:bottom-5 lg:right-5"
         aria-label="Buka pengaturan tema"
         title="Tema & tampilan"
       >
-        <span className="absolute inset-0 rounded-2xl bg-brand-400/40 animate-ping-soft" />
-        <Palette size={20} className="relative transition-transform duration-500 group-hover:rotate-12" />
+        <span className="absolute inset-0 rounded-xl bg-brand-400/40 animate-ping-soft" />
+        <Palette size={18} className="relative transition-transform duration-500 group-hover:rotate-12" />
       </button>
     )
   }
 
   return (
-    <div className="fixed bottom-20 right-4 z-[76] w-[min(384px,calc(100vw-2rem))] origin-bottom-right animate-scale-in overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur-2xl print:hidden lg:bottom-6 lg:right-6">
-      <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-4 py-3.5 text-white">
+    <div className="fixed bottom-20 right-3 z-[76] w-[min(340px,calc(100vw-1.5rem))] origin-bottom-right animate-scale-in overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-2xl backdrop-blur-2xl print:hidden lg:bottom-5 lg:right-5">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-600 to-brand-800 px-3 py-3 text-white">
         <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
         <div className="relative flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 ring-1 ring-inset ring-white/25">
-              <Sparkles size={17} />
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-inset ring-white/25">
+              <Sparkles size={15} />
             </span>
             <div>
-              <p className="text-[13px] font-bold leading-tight">Tema &amp; Tampilan</p>
-              <p className="text-[10px] text-white/70">Warna, transparansi, dan latar belakang</p>
+              <p className="text-[12px] font-bold leading-tight">Tema &amp; Tampilan</p>
+              <p className="text-[9.5px] text-white/70">Warna, transparansi, latar</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -125,7 +125,7 @@ export function ThemePanel() {
         </div>
       </div>
 
-      <div className="max-h-[min(70vh,600px)] space-y-5 overflow-y-auto px-4 py-4">
+      <div className="max-h-[min(66vh,540px)] space-y-4 overflow-y-auto px-3.5 py-3.5">
         <section>
           <div className="mb-2.5 flex items-center justify-between">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Warna Tema</p>
@@ -134,7 +134,7 @@ export function ThemePanel() {
               {theme.color.toUpperCase()}
             </span>
           </div>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1.5">
             {standardPresets.map(renderSwatch)}
           </div>
 
@@ -145,7 +145,7 @@ export function ThemePanel() {
               Kontras tinggi
             </span>
           </div>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1.5">
             {deepPresets.map(renderSwatch)}
           </div>
 

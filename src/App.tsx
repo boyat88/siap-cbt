@@ -2,7 +2,7 @@ import { lazy, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider, useApp } from './store/AppContext'
 import { CbtProvider } from './store/CbtContext'
-import { ThemeProvider, useTheme } from './store/ThemeContext'
+import { ThemeProvider } from './store/ThemeContext'
 import { ToastProvider } from './components/ui'
 import { ThemePanel } from './components/ThemePanel'
 import { Layout } from './components/Layout'
@@ -47,13 +47,12 @@ function AdminOnly({ children }: { children: ReactNode }) {
 }
 
 /**
- * Panel tema hanya dirender saat dibuka dari menu Pengaturan/Tampilan.
- * Tombol tema melayang di pojok kanan bawah tidak lagi ditampilkan.
+ * Panel tema melayang di pojok kanan bawah (ukuran ringkas) untuk pengguna
+ * yang sudah masuk. Tidak ditampilkan di halaman login/mode ujian siswa.
  */
 function ThemePanelHost() {
   const { user } = useApp()
-  const { panelOpen } = useTheme()
-  if (!user || !panelOpen) return null
+  if (!user) return null
   return <ThemePanel />
 }
 
