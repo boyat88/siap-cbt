@@ -39,6 +39,7 @@ import { ImportModal, type ImportValidation } from '../components/ImportModal'
 import { PhotoPicker } from '../components/PhotoPicker'
 import { cellNumber, cellText, exportExcel, normalizeActiveStatus, normalizeGender, normalizeKey, pick } from '../lib/excel'
 import { SUBJECTS } from '../lib/constants'
+import { newTeachingScheduleId } from '../lib/teachingSchedule'
 import type { Gender, Teacher, TeachingSchedule } from '../types'
 
 const emptyTeacher: Omit<Teacher, 'id'> = {
@@ -657,9 +658,21 @@ export function Guru() {
                       setScheduleError('Pilih minimal satu kelas.')
                       return
                     }
+                    const duplicate = (data.teachingSchedules ?? []).some(
+                      (s) =>
+                        s.teacherId === editing.id &&
+                        s.day === scheduleDay &&
+                        s.subject === scheduleSubject &&
+                        s.classIds.length === scheduleClasses.length &&
+                        s.classIds.every((id) => scheduleClasses.includes(id)),
+                    )
+                    if (duplicate) {
+                      setScheduleError('Jadwal dengan hari, mapel, dan kelas yang sama sudah ada.')
+                      return
+                    }
                     setScheduleError('')
                     addTeachingSchedule({
-                      id: `ts_${Date.now()}`,
+                      id: newTeachingScheduleId(),
                       teacherId: editing.id,
                       subject: scheduleSubject,
                       day: scheduleDay as TeachingSchedule['day'],

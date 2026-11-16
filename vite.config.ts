@@ -392,6 +392,45 @@ function createStateApi(): Plugin {
     renameSync(temp, file)
   }
 
+  // Sama seperti server produksi: jadwal mengajar digabung berdasarkan id agar
+  // tidak hilang saat perangkat lain menyimpan state yang lebih lama.
+  const mergeState = (current: Record<string, unknown>, incoming: Record<string, unknown>) => {
+    const cur = current && typeof current === 'object' ? current : {}
+    const inc = incoming && typeof incoming === 'object' ? incoming : {}
+    const curData = (cur.data && typeof cur.data === 'object' ? cur.data : {}) as Record<string, unknown>
+    const incData = (inc.data && typeof inc.data === 'object' ? inc.data : {}) as Record<string, unknown>
+
+    const tombstones: Record<string, string> = {
+      ...((curData.deletedTeachingSchedules as Record<string, string>) ?? {}),
+      ...((incData.deletedTeachingSchedules as Record<string, string>) ?? {}),
+      ...((inc.deletedTeachingSchedules as Record<string, string>) ?? {}),
+    }
+
+    const schedules = new Map<string, unknown>()
+    for (const item of (Array.isArray(curData.teachingSchedules) ? curData.teachingSchedules : []) as {
+      id?: string
+    }[]) {
+      if (item && typeof item.id === 'string') schedules.set(item.id, item)
+    }
+    for (const item of (Array.isArray(incData.teachingSchedules) ? incData.teachingSchedules : []) as {
+      id?: string
+    }[]) {
+      if (item && typeof item.id === 'string') schedules.set(item.id, item)
+    }
+    for (const id of Object.keys(tombstones)) schedules.delete(id)
+
+    return {
+      ...cur,
+      ...inc,
+      data: {
+        ...curData,
+        ...incData,
+        teachingSchedules: Array.from(schedules.values()),
+        deletedTeachingSchedules: tombstones,
+      },
+    }
+  }
+
   const sendJson = (res: ServerResponse, status: number, body: unknown) => {
     res.statusCode = status
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -433,8 +472,8 @@ function createStateApi(): Plugin {
 
           if (req.method === 'POST') {
             const raw = await readBody(req)
-            const body = JSON.parse(raw || '{}') as unknown
-            writeState(body)
+            const body = JSON.parse(raw || '{}') as Record<string, unknown>
+            writeState(mergeState(readState(), body))
             sendJson(res, 200, { ok: true })
             return
           }

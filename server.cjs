@@ -42,6 +42,47 @@ function writeJsonFile(file, value) {
   fs.renameSync(temp, file)
 }
 
+/**
+ * Gabungkan state yang masuk dengan state tersimpan.
+ *
+ * Khusus jadwal mengajar: gabungkan berdasarkan id, jangan menimpa seluruh
+ * daftar. Dengan begitu jadwal yang baru ditambahkan dari perangkat/tab lain
+ * tidak hilang ketika perangkat yang datanya lebih lama menyimpan state.
+ * Penghapusan tetap dihormati lewat daftar `deletedTeachingSchedules`.
+ */
+function mergeCoreState(current, incoming) {
+  const cur = current && typeof current === 'object' ? current : {}
+  const inc = incoming && typeof incoming === 'object' ? incoming : {}
+  const curData = cur.data && typeof cur.data === 'object' ? cur.data : {}
+  const incData = inc.data && typeof inc.data === 'object' ? inc.data : {}
+
+  const tombstones = {
+    ...(curData.deletedTeachingSchedules || {}),
+    ...(incData.deletedTeachingSchedules || {}),
+    ...(inc.deletedTeachingSchedules || {}),
+  }
+
+  const schedules = new Map()
+  for (const item of Array.isArray(curData.teachingSchedules) ? curData.teachingSchedules : []) {
+    if (item && typeof item.id === 'string') schedules.set(item.id, item)
+  }
+  for (const item of Array.isArray(incData.teachingSchedules) ? incData.teachingSchedules : []) {
+    if (item && typeof item.id === 'string') schedules.set(item.id, item)
+  }
+  for (const id of Object.keys(tombstones)) schedules.delete(id)
+
+  return {
+    ...cur,
+    ...inc,
+    data: {
+      ...curData,
+      ...incData,
+      teachingSchedules: Array.from(schedules.values()),
+      deletedTeachingSchedules: tombstones,
+    },
+  }
+}
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -70,7 +111,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       try {
         const raw = await readBody(req)
-        writeJsonFile(STATE_FILE, JSON.parse(raw || '{}'))
+        const incoming = JSON.parse(raw || '{}')
+        const current = readJsonFile(STATE_FILE, {})
+        writeJsonFile(STATE_FILE, mergeCoreState(current, incoming))
         sendJson(res, 200, { ok: true })
       } catch (e) {
         sendJson(res, 500, { error: e.message })

@@ -4,6 +4,7 @@ import { demoAccounts, demoTeacherAccount, seedData } from '../data/seed'
 import { LOCKED_MENUS } from '../lib/navigation'
 import { teacherSubjects, type LegacyTeacher } from '../lib/teacher'
 import { apiUrl } from '../lib/serverUrl'
+import { mergeScheduleTombstones, mergeTeachingSchedules } from '../lib/teachingSchedule'
 import {
   deleteAttendanceSession,
   fetchAttendanceSnapshot,
@@ -111,6 +112,10 @@ function migrateSettingsFormat(data: AppData): AppData {
       appLogo: newLogo,
     },
     teachingSchedules: Array.isArray(data.teachingSchedules) ? data.teachingSchedules : [],
+    deletedTeachingSchedules:
+      data.deletedTeachingSchedules && typeof data.deletedTeachingSchedules === 'object'
+        ? data.deletedTeachingSchedules
+        : {},
   }
 }
 
@@ -252,6 +257,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const dataRef = useRef(data)
   const hasLoadedFromServer = useRef(false)
   const isApplyingRemote = useRef(false)
+  // Nomor urut perubahan lokal & penanda proses kirim ke server. Dipakai agar
+  // data server yang sudah usang tidak menimpa perubahan yang belum terkirim.
+  const localSeq = useRef(0)
+  const pushBusy = useRef(0)
+  const pushCoreRef = useRef<(() => Promise<void>) | null>(null)
+  const lastMutationAt = useRef(0)
+  const skipFirstDataEffect = useRef(true)
 
   useEffect(() => {
     dataRef.current = data
@@ -259,6 +271,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     persist(DATA_KEY, JSON.stringify(data))
+    // Efek pertama hanya memuat data awal; bukan perubahan dari pengguna.
+    if (skipFirstDataEffect.current) {
+      skipFirstDataEffect.current = false
+      return
+    }
+    if (isApplyingRemote.current) return
+    localSeq.current += 1
+    lastMutationAt.current = Date.now()
   }, [data])
 
   useEffect(() => {
@@ -324,22 +344,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const pushCoreToServer = useCallback(async () => {
     if (isApplyingRemote.current || !hasLoadedFromServer.current) return
+    const seqAtStart = localSeq.current
+    pushBusy.current += 1
     try {
-      await fetch(apiUrl('/api/state'), {
+      const payload = {
+        data: {
+          ...data,
+          sessions: [],
+          deletedTeachingSchedules: mergeScheduleTombstones(data.deletedTeachingSchedules),
+        },
+        profiles: loadProfiles(),
+        hiddenMenus,
+      }
+      const response = await fetch(apiUrl('/api/state'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: { ...data, sessions: [] },
-          profiles: loadProfiles(),
-          hiddenMenus,
-        }),
+        body: JSON.stringify(payload),
       })
+      if (!response.ok) throw new Error('Gagal menyimpan state')
+      // Ada perubahan baru saat pengiriman berlangsung: jadwalkan kirim ulang
+      // agar perubahan terakhir tidak tertinggal di perangkat.
+      if (localSeq.current !== seqAtStart) {
+        window.setTimeout(() => void pushCoreRef.current?.(), 600)
+      }
     } catch {
       // Abaikan kegagalan jaringan; data tetap tersimpan lokal.
+    } finally {
+      pushBusy.current -= 1
     }
   }, [data, hiddenMenus])
 
+  useEffect(() => {
+    pushCoreRef.current = pushCoreToServer
+  }, [pushCoreToServer])
+
   const refreshFromServer = useCallback(async () => {
+    const seqAtStart = localSeq.current
+    const busyAtStart = pushBusy.current
     try {
       const response = await fetch(apiUrl('/api/state'))
       if (!response.ok) return
@@ -361,20 +402,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return
       }
 
+      // Ada perubahan lokal yang belum selesai dikirim (atau terjadi selama
+      // permintaan ini berjalan). Jangan pakai data server agar jadwal/data
+      // yang baru disimpan tidak hilang.
+      if (
+        busyAtStart > 0 ||
+        pushBusy.current > 0 ||
+        localSeq.current !== seqAtStart ||
+        Date.now() - lastMutationAt.current < 3000
+      ) {
+        hasLoadedFromServer.current = true
+        return
+      }
+
       isApplyingRemote.current = true
       if (state.data) {
         const migrated = migrateTeacherSubjects(
           migrateTeacherAccounts(migrateClassFormat(state.data)),
         )
-        setData((prev) => ({
-          ...prev,
-          students: migrated.students,
-          teachers: migrated.teachers,
-          classes: migrated.classes,
-          notifications: migrated.notifications,
-          settings: migrated.settings,
-          teachingSchedules: migrated.teachingSchedules ?? [],
-        }))
+        const remoteTombstones = mergeScheduleTombstones(migrated.deletedTeachingSchedules)
+        setData((prev) => {
+          const tombstones = mergeScheduleTombstones(prev.deletedTeachingSchedules, remoteTombstones)
+          return {
+            ...prev,
+            students: migrated.students,
+            teachers: migrated.teachers,
+            classes: migrated.classes,
+            notifications: migrated.notifications,
+            settings: migrated.settings,
+            teachingSchedules: mergeTeachingSchedules(
+              prev.teachingSchedules,
+              migrated.teachingSchedules,
+              tombstones,
+            ),
+            deletedTeachingSchedules: tombstones,
+          }
+        })
       }
       if (state.profiles && typeof state.profiles === 'object') {
         persist(PROFILE_KEY, JSON.stringify(state.profiles))
@@ -412,7 +475,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!hasLoadedFromServer.current) return
     const timer = window.setTimeout(() => {
       void pushCoreToServer()
-    }, 1000)
+    }, 400)
     return () => window.clearTimeout(timer)
   }, [data, hiddenMenus, pushCoreToServer])
 
@@ -516,7 +579,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const deleteTeacher = useCallback((id: string) => {
-    setData((prev) => ({ ...prev, teachers: prev.teachers.filter((t) => t.id !== id) }))
+    setData((prev) => {
+      const removed = (prev.teachingSchedules ?? []).filter((s) => s.teacherId === id)
+      const tombstones = { ...(prev.deletedTeachingSchedules ?? {}) }
+      const now = new Date().toISOString()
+      for (const schedule of removed) tombstones[schedule.id] = now
+      return {
+        ...prev,
+        teachers: prev.teachers.filter((t) => t.id !== id),
+        teachingSchedules: (prev.teachingSchedules ?? []).filter((s) => s.teacherId !== id),
+        deletedTeachingSchedules: tombstones,
+      }
+    })
   }, [])
 
   const addClass = useCallback((clazz: ClassRoom) => {
@@ -532,7 +606,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const addTeachingSchedule = useCallback((schedule: TeachingSchedule) => {
-    setData((prev) => ({ ...prev, teachingSchedules: [schedule, ...(prev.teachingSchedules ?? [])] }))
+    setData((prev) => {
+      const tombstones = { ...(prev.deletedTeachingSchedules ?? {}) }
+      delete tombstones[schedule.id]
+      return {
+        ...prev,
+        teachingSchedules: [schedule, ...(prev.teachingSchedules ?? []).filter((item) => item.id !== schedule.id)],
+        deletedTeachingSchedules: tombstones,
+      }
+    })
   }, [])
 
   const updateTeachingSchedule = useCallback((schedule: TeachingSchedule) => {
@@ -546,6 +628,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({
       ...prev,
       teachingSchedules: (prev.teachingSchedules ?? []).filter((s) => s.id !== id),
+      deletedTeachingSchedules: {
+        ...(prev.deletedTeachingSchedules ?? {}),
+        [id]: new Date().toISOString(),
+      },
     }))
   }, [])
 
@@ -580,13 +666,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetData = useCallback(() => {
     const fresh = seedData()
-    setData(fresh)
+    setData((prev) => {
+      const tombstones = { ...(prev.deletedTeachingSchedules ?? {}) }
+      const now = new Date().toISOString()
+      for (const schedule of prev.teachingSchedules ?? []) tombstones[schedule.id] = now
+      return { ...fresh, deletedTeachingSchedules: tombstones }
+    })
   }, [])
 
   const restoreData = useCallback((next: AppData, profiles: Record<string, Partial<User>>) => {
     const migrated = migrateSettingsFormat(migrateTeacherSubjects(migrateTeacherAccounts(migrateClassFormat(next))))
-    setData(migrated)
-    persist(DATA_KEY, JSON.stringify(migrated))
+    setData((prev) => {
+      const tombstones = { ...(prev.deletedTeachingSchedules ?? {}) }
+      const now = new Date().toISOString()
+      const kept = new Set((migrated.teachingSchedules ?? []).map((schedule) => schedule.id))
+      for (const schedule of prev.teachingSchedules ?? []) {
+        if (!kept.has(schedule.id)) tombstones[schedule.id] = now
+      }
+      return {
+        ...migrated,
+        deletedTeachingSchedules: mergeScheduleTombstones(tombstones, migrated.deletedTeachingSchedules),
+      }
+    })
 
     if (Object.keys(profiles).length > 0) {
       persist(PROFILE_KEY, JSON.stringify(profiles))
@@ -595,15 +696,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const clearPeopleData = useCallback(() => {
-    setData((prev) => ({
-      ...prev,
-      students: [],
-      teachers: [],
-      sessions: [],
-      notifications: [],
-      // Lepaskan wali kelas agar tidak menunjuk ke guru yang sudah dihapus.
-      classes: prev.classes.map((clazz) => ({ ...clazz, homeroomId: '' })),
-    }))
+    setData((prev) => {
+      const tombstones = { ...(prev.deletedTeachingSchedules ?? {}) }
+      const now = new Date().toISOString()
+      for (const schedule of prev.teachingSchedules ?? []) tombstones[schedule.id] = now
+      return {
+        ...prev,
+        students: [],
+        teachers: [],
+        sessions: [],
+        notifications: [],
+        teachingSchedules: [],
+        deletedTeachingSchedules: tombstones,
+        // Lepaskan wali kelas agar tidak menunjuk ke guru yang sudah dihapus.
+        classes: prev.classes.map((clazz) => ({ ...clazz, homeroomId: '' })),
+      }
+    })
   }, [])
 
   const value = useMemo<AppContextValue>(

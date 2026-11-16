@@ -125,6 +125,8 @@ export interface AppData {
   notifications: AppNotification[]
   settings: Settings
   teachingSchedules: TeachingSchedule[]
+  /** Penanda jadwal mengajar yang sudah dihapus (id → waktu hapus ISO). */
+  deletedTeachingSchedules?: Record<string, string>
 }
 
 /* ------------------------------------------------------------------ */
