@@ -333,14 +333,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => setUser(null), [])
 
-  const updateProfile = useCallback((updates: Partial<User>) => {
-    setUser((prev) => {
-      if (!prev) return prev
-      const next = { ...prev, ...updates }
-      saveProfile(prev.id, next)
-      return next
-    })
-  }, [])
+  const updateProfile = useCallback(
+    (updates: Partial<User>) => {
+      if (!user) return
+      const next: User = { ...user, ...updates }
+      saveProfile(user.id, next)
+      setUser(next)
+
+      // Akun guru boleh mengubah datanya sendiri: sinkronkan ke data guru
+      // agar perubahan langsung terpakai pada absensi, jadwal, dan laporan.
+      if (user.role === 'guru') {
+        const email = user.email.toLowerCase()
+        setData((prev) => {
+          const index = prev.teachers.findIndex(
+            (teacher) => teacher.email.toLowerCase() === email || teacher.name === user.name,
+          )
+          if (index === -1) return prev
+          const teacher = prev.teachers[index]
+          const subject = updates.subject?.trim()
+          const teachers = [...prev.teachers]
+          teachers[index] = {
+            ...teacher,
+            name: next.name,
+            nip: next.nip ?? teacher.nip,
+            email: next.email,
+            phone: next.phone ?? teacher.phone,
+            photo: next.photo ?? teacher.photo,
+            subjects: subject ? [subject] : teacher.subjects,
+          }
+          return { ...prev, teachers }
+        })
+      }
+    },
+    [user],
+  )
 
   const pushCoreToServer = useCallback(async () => {
     if (isApplyingRemote.current || !hasLoadedFromServer.current) return

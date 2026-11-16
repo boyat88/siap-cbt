@@ -506,6 +506,7 @@ export function Layout() {
   const [today, setToday] = useState(toISODate(new Date()))
   const [routeTick, setRouteTick] = useState(1)
   const page = resolvePageTitle(location.pathname)
+  const isGuru = user?.role === 'guru'
   const mobileItems = visibleMobileNav(user?.role, hiddenMenus)
 
   // Urutan menu dipakai untuk menentukan arah transisi (maju: geser dari kanan).
@@ -542,6 +543,12 @@ export function Layout() {
     // Dipakai CSS agar foto latar tidak masuk ke area menu samping.
     document.documentElement.dataset.sidebar = sidebarCollapsed ? 'collapsed' : 'open'
   }, [sidebarCollapsed])
+
+  // Peran pengguna dipakai CSS untuk meringankan tampilan di HP
+  // (akun guru memakai mode minimalis).
+  useEffect(() => {
+    document.documentElement.dataset.role = user?.role ?? 'guest'
+  }, [user?.role])
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine)
@@ -719,7 +726,10 @@ export function Layout() {
         })}
         <button
           onClick={() => setMobileOpen(true)}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[9.5px] font-semibold text-slate-400 transition-colors hover:text-slate-600"
+          className={cn(
+            'flex flex-1 flex-col items-center gap-1 py-2.5 text-[9.5px] font-semibold text-slate-400 transition-colors hover:text-slate-600',
+            isGuru && 'hidden',
+          )}
         >
           <span className="flex h-7 w-10 items-center justify-center rounded-lg">
             <Menu size={18} />

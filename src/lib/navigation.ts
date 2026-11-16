@@ -70,6 +70,17 @@ export const navGroups: NavGroup[] = [
 
 export const allMenuItems = navGroups.flatMap((group) => group.items)
 
+/**
+ * Menu untuk akun guru: hanya dasbor dan absensi siswa.
+ * Akun guru difokuskan untuk mengisi absensi dan mengubah datanya sendiri
+ * (melalui menu akun → Profil Saya).
+ */
+export const GURU_MENUS = ['/dashboard', '/absensi']
+
+function isGuruMenu(path: string): boolean {
+  return GURU_MENUS.includes(path)
+}
+
 /** Menu yang tidak boleh disembunyikan agar pengguna tidak terkunci. */
 export const LOCKED_MENUS = ['/dashboard', '/pengaturan']
 
@@ -86,19 +97,25 @@ export function canAccessMenu(item: NavItem, role: Role | undefined): boolean {
 }
 
 export function visibleNavGroups(role: Role | undefined, hiddenMenus: string[]): NavGroup[] {
+  const isGuru = role === 'guru'
   return navGroups
     .map((group) => ({
       ...group,
       items: group.items.filter(
-        (item) => canAccessMenu(item, role) && !hiddenMenus.includes(item.to),
+        (item) =>
+          canAccessMenu(item, role) &&
+          !hiddenMenus.includes(item.to) &&
+          (!isGuru || isGuruMenu(item.to)),
       ),
     }))
     .filter((group) => group.items.length > 0)
 }
 
 export function visibleMobileNav(role: Role | undefined, hiddenMenus: string[]): typeof mobileNavItems {
+  const isGuru = role === 'guru'
   return mobileNavItems.filter((item) => {
     if (hiddenMenus.includes(item.to)) return false
+    if (isGuru && !isGuruMenu(item.to)) return false
     const match = navGroups.flatMap((group) => group.items).find((nav) => nav.to === item.to)
     return match ? canAccessMenu(match, role) : true
   })

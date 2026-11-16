@@ -1213,6 +1213,48 @@ html[data-menu-fg='dark'] [data-menu-surface] nav a span[style] {
   animation: theme-trigger-pulse 0.45s ease-out;
 }
 
+/*
+ * Mode ringan untuk akun guru di HP.
+ * Menghilangkan blur/gradien dekoratif agar halaman lebih cepat dan bersih;
+ * fokus tetap pada absensi.
+ */
+@media (max-width: 1023px) {
+  html[data-role='guru'] .app-header,
+  html[data-role='guru'] .mobile-nav-glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: rgb(255 255 255 / 0.98);
+  }
+
+  html[data-role='guru'] .app-header::after {
+    display: none;
+  }
+
+  html[data-role='guru'] .glass-card,
+  html[data-glass='on'][data-role='guru'] .glass-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05), 0 10px 24px -20px rgb(15 23 42 / 0.35);
+  }
+
+  html[data-role='guru'] .glass-card:hover {
+    transform: none;
+  }
+
+  html[data-role='guru'] .stagger-children > * {
+    animation: none;
+  }
+
+  /* Efek kaca/buram pada kartu formulir absensi juga dimatikan. */
+  html[data-role='guru'] [data-content-body] .backdrop-blur-md,
+  html[data-role='guru'] [data-content-body] .backdrop-blur-xl,
+  html[data-role='guru'] [data-content-body] .backdrop-blur-sm {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

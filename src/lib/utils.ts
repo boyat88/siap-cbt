@@ -32,6 +32,14 @@ export function formatTime(iso: string): string {
   return new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit' }).format(date)
 }
 
+/** Nama hari (Senin, Selasa, ...) dari tanggal ISO `YYYY-MM-DD`. */
+export function dayName(isoDate: string): string {
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const date = parseISODate(isoDate)
+  if (Number.isNaN(date.getTime())) return ''
+  return days[date.getDay()] ?? ''
+}
+
 export function relativeTime(iso: string): string {
   const date = new Date(iso)
   const diff = Date.now() - date.getTime()
