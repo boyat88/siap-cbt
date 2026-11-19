@@ -1341,6 +1341,23 @@ html[data-menu-fg='dark'] [data-menu-surface] nav a span[style] {
   }
 }
 
+/* Label "Jumlah peserta" mengikuti warna status kartu. */
+.exam-status-card[data-status='draft'] .exam-peserta {
+  background-color: rgb(226 232 240 / 0.85);
+  color: rgb(71 85 105);
+  --tw-ring-color: rgb(203 213 225);
+}
+.exam-status-card[data-status='aktif'] .exam-peserta {
+  background-color: rgb(209 250 229 / 0.85);
+  color: rgb(4 120 87);
+  --tw-ring-color: rgb(110 231 183);
+}
+.exam-status-card[data-status='selesai'] .exam-peserta {
+  background-color: rgb(224 242 254 / 0.85);
+  color: rgb(3 105 161);
+  --tw-ring-color: rgb(186 230 253);
+}
+
 /* Area tombol mengikuti warna status kartu. */
 .exam-card-actions {
   transition: background-color 0.3s ease;

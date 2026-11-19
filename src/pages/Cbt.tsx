@@ -17,6 +17,7 @@ import {
   Square,
   Timer,
   Trash2,
+  Users,
 } from 'lucide-react'
 import {
   Badge,
@@ -79,6 +80,16 @@ export function Cbt() {
   const [cardGenerating, setCardGenerating] = useState(false)
 
   const classMap = useMemo(() => new Map(data.classes.map((clazz) => [clazz.id, clazz])), [data.classes])
+
+  // Jumlah siswa aktif per kelas, dipakai untuk "Jumlah peserta" pada kartu ujian.
+  const studentCountByClass = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const student of data.students) {
+      if (student.status !== 'aktif') continue
+      counts.set(student.classId, (counts.get(student.classId) ?? 0) + 1)
+    }
+    return counts
+  }, [data.students])
 
   const exams = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -296,6 +307,10 @@ export function Cbt() {
             const pg = pgQuestions(exam).length
             const essay = essayQuestions(exam).length
             const peserta = attemptCount(exam.id)
+            const jumlahPeserta = exam.classIds.reduce(
+              (total, classId) => total + (studentCountByClass.get(classId) ?? 0),
+              0,
+            )
             return (
               <Card key={exam.id} className="exam-status-card flex flex-col overflow-hidden" data-status={exam.status}>
                 <div className="exam-card-strip h-1.5 w-full shrink-0" />
@@ -320,6 +335,10 @@ export function Cbt() {
                         </Badge>
                       ))
                     )}
+                    <span className="exam-peserta inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-inset ring-brand-100">
+                      <Users size={12} />
+                      Jumlah peserta: <span className="tabular-nums">{jumlahPeserta}</span>
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 sm:grid-cols-4">
@@ -337,7 +356,7 @@ export function Cbt() {
                     </span>
                     <span className="flex items-center gap-1.5">
                       <ClipboardList size={13} className="text-slate-400" />
-                      {peserta} peserta
+                      {peserta} mengerjakan
                     </span>
                   </div>
 
