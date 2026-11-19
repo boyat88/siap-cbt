@@ -42,10 +42,10 @@ import type { CbtExam, CbtExamStatus } from '../types'
 
 type StatusFilter = 'semua' | CbtExamStatus
 
-const statusMeta: Record<CbtExamStatus, { label: string; tone: 'slate' | 'emerald' | 'sky' }> = {
-  draft: { label: 'Draft', tone: 'slate' },
-  aktif: { label: 'Aktif', tone: 'emerald' },
-  selesai: { label: 'Selesai', tone: 'sky' },
+const statusMeta: Record<CbtExamStatus, { label: string; tone: 'slate' | 'emerald' | 'sky'; keterangan: string }> = {
+  draft: { label: 'Draft', tone: 'slate', keterangan: 'Belum diaktifkan' },
+  aktif: { label: 'Aktif', tone: 'emerald', keterangan: 'Sedang berlangsung' },
+  selesai: { label: 'Selesai', tone: 'sky', keterangan: 'Sudah diakhiri' },
 }
 
 const filters: { key: StatusFilter; label: string }[] = [
@@ -229,12 +229,12 @@ export function Cbt() {
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: 'Total Ujian', value: stats.total, tone: 'text-navy-950' },
-          { label: 'Sedang Aktif', value: stats.aktif, tone: 'text-emerald-600' },
-          { label: 'Draft', value: stats.draft, tone: 'text-slate-500' },
-          { label: 'Selesai', value: stats.selesai, tone: 'text-sky-600' },
+          { label: 'Total Ujian', value: stats.total, tone: 'text-navy-950', status: '' },
+          { label: 'Sedang Aktif', value: stats.aktif, tone: 'text-emerald-600', status: 'aktif' },
+          { label: 'Draft', value: stats.draft, tone: 'text-slate-500', status: 'draft' },
+          { label: 'Selesai', value: stats.selesai, tone: 'text-sky-600', status: 'selesai' },
         ].map((item) => (
-          <Card key={item.label} className="px-4 py-3">
+          <Card key={item.label} className="exam-stat px-4 py-3" data-status={item.status || undefined}>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
             <p className={cn('mt-1 text-2xl font-bold', item.tone)}>{item.value}</p>
           </Card>
@@ -247,13 +247,16 @@ export function Cbt() {
             <button
               key={item.key}
               onClick={() => setFilter(item.key)}
+              data-status={item.key === 'semua' ? undefined : item.key}
+              data-selected={filter === item.key}
               className={cn(
-                'rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                'exam-filter inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors',
                 filter === item.key
-                  ? 'bg-navy-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                  ? 'border-transparent bg-navy-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
               )}
             >
+              {item.key !== 'semua' && <span className="exam-filter-dot h-2 w-2 rounded-full" />}
               {item.label}
             </button>
           ))}
@@ -294,15 +297,17 @@ export function Cbt() {
             const essay = essayQuestions(exam).length
             const peserta = attemptCount(exam.id)
             return (
-              <Card key={exam.id} className="flex flex-col">
+              <Card key={exam.id} className="exam-status-card flex flex-col overflow-hidden" data-status={exam.status}>
+                <div className="exam-card-strip h-1.5 w-full shrink-0" />
                 <CardHeader
                   title={
                     <span className="flex items-center gap-2">
                       <span className="truncate">{exam.title}</span>
+                      <span className="exam-status-dot h-2 w-2 shrink-0 rounded-full" data-status={exam.status} />
                       <Badge tone={meta.tone}>{meta.label}</Badge>
                     </span>
                   }
-                  description={`${exam.subject} · diperbarui ${relativeTime(exam.updatedAt)}`}
+                  description={`${exam.subject} · ${meta.keterangan} · diperbarui ${relativeTime(exam.updatedAt)}`}
                 />
                 <div className="flex flex-1 flex-col gap-3 px-5 py-4">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -346,7 +351,7 @@ export function Cbt() {
                   </button>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
+                <div className="exam-card-actions flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
                   <Button variant="outline" size="sm" onClick={() => navigate(`/cbt/${exam.id}`)}>
                     <Pencil size={13} />
                     Sunting
@@ -362,20 +367,31 @@ export function Cbt() {
                   </Button>
                   <span className="flex-1" />
                   {exam.status === 'draft' && (
-                    <Button variant="primary" size="sm" onClick={() => setStatus(exam, 'aktif')}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="exam-action exam-action--activate"
+                      onClick={() => setStatus(exam, 'aktif')}
+                    >
                       <Play size={13} />
                       Aktifkan
                     </Button>
                   )}
                   {exam.status === 'aktif' && (
                     <>
-                      <Button variant="primary" size="sm" onClick={() => setStatus(exam, 'selesai')}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="exam-action exam-action--finish"
+                        onClick={() => setStatus(exam, 'selesai')}
+                      >
                         <Square size={13} />
                         Akhiri
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="exam-action exam-action--draft"
                         onClick={() => setStatus(exam, 'draft')}
                         title="Kembalikan ke draft"
                       >
@@ -385,7 +401,12 @@ export function Cbt() {
                     </>
                   )}
                   {exam.status === 'selesai' && (
-                    <Button variant="outline" size="sm" onClick={() => setStatus(exam, 'aktif')}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="exam-action exam-action--reopen"
+                      onClick={() => setStatus(exam, 'aktif')}
+                    >
                       <Play size={13} />
                       Buka Lagi
                     </Button>

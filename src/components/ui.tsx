@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   type ButtonHTMLAttributes,
+  type HTMLAttributes,
   type InputHTMLAttributes,
   type PointerEvent,
   type ReactNode,
@@ -128,9 +129,13 @@ export function Button({
 /* Surfaces                                                            */
 /* ------------------------------------------------------------------ */
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
+export function Card({
+  className,
+  children,
+  ...props
+}: { className?: string; children: ReactNode } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('glass-card hover-lift', className)}>
+    <div className={cn('glass-card hover-lift', className)} {...props}>
       {children}
     </div>
   )
