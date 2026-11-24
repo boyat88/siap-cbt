@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Ban,
@@ -42,7 +41,6 @@ type Phase = 'landing' | 'petunjuk' | 'ujian' | 'selesai'
 export function Ujian() {
   const { data } = useApp()
   const cbt = useCbt()
-  const navigate = useNavigate()
   const toast = useToast()
 
   const [phase, setPhase] = useState<Phase>('landing')
@@ -466,7 +464,9 @@ export function Ujian() {
             <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl font-bold backdrop-blur">
               CBT
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-outline-strong">Mode Ujian Siswa</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-outline-strong">
+              {data.settings.studentExamTitle?.trim() || 'Mode Ujian Siswa'}
+            </h1>
             <p className="mt-1 text-sm text-slate-200">
               {data.settings.school.name}
             </p>
@@ -517,12 +517,6 @@ export function Ujian() {
             >
               Masuk ke Ujian
             </Button>
-            <button
-              onClick={() => navigate('/login')}
-              className="mt-3 w-full text-center text-xs font-medium text-slate-600 hover:text-slate-600"
-            >
-              Masuk sebagai guru / administrator →
-            </button>
           </Card>
 
           <p className="mt-6 text-center text-[11px] text-slate-600">

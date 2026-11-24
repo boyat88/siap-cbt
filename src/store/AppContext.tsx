@@ -4,6 +4,7 @@ import { demoAccounts, demoTeacherAccount, seedData } from '../data/seed'
 import { LOCKED_MENUS } from '../lib/navigation'
 import { teacherSubjects, type LegacyTeacher } from '../lib/teacher'
 import { apiUrl } from '../lib/serverUrl'
+import { defaultSettings } from '../lib/utils'
 import { mergeScheduleTombstones, mergeTeachingSchedules } from '../lib/teachingSchedule'
 import {
   deleteAttendanceSession,
@@ -109,6 +110,10 @@ function migrateSettingsFormat(data: AppData): AppData {
     settings: {
       ...data.settings,
       holidays: Array.isArray(data.settings?.holidays) ? data.settings.holidays : [],
+      studentExamTitle:
+        typeof data.settings?.studentExamTitle === 'string' && data.settings.studentExamTitle.trim()
+          ? data.settings.studentExamTitle
+          : defaultSettings.studentExamTitle,
       appLogo: newLogo,
     },
     teachingSchedules: Array.isArray(data.teachingSchedules) ? data.teachingSchedules : [],

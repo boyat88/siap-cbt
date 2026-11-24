@@ -104,6 +104,8 @@ export interface Settings {
   lateTolerance: number
   notifyGuardian: boolean
   weeklyReport: boolean
+  /** Judul halaman masuk ujian siswa, dapat diubah oleh administrator. */
+  studentExamTitle?: string
   appLogo?: string
   /** Daftar hari libur (tanggal ISO + nama). Sabtu/Minggu otomatis libur. */
   holidays?: { date: string; name: string }[]

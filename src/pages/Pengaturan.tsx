@@ -164,6 +164,7 @@ export function Pengaturan() {
     }
     if (draft.school.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.school.email)) next.email = 'Format email tidak valid'
     if (!draft.academicYear.trim() || !/^\d{4}\/\d{4}$/.test(draft.academicYear)) next.academicYear = 'Format tahun ajaran: 2026/2027'
+    if (!draft.studentExamTitle?.trim()) next.studentExamTitle = 'Judul halaman ujian wajib diisi'
     if (draft.minimumAttendance < 0 || draft.minimumAttendance > 100) next.minimum = 'Nilai harus 0-100'
     if (draft.lateTolerance < 0 || draft.lateTolerance > 120) next.late = 'Nilai harus 0-120 menit'
     setErrors(next)
@@ -412,6 +413,28 @@ export function Pengaturan() {
               <Alert tone="info" title="Perubahan periode akademik">
                 Pastikan seluruh absensi pada periode sebelumnya telah diselesaikan sebelum mengganti tahun ajaran atau semester.
               </Alert>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title={
+                <span className="flex items-center gap-2">
+                  <GraduationCap size={16} className="text-brand-500" /> Halaman Ujian Siswa
+                </span>
+              }
+              description="Atur teks yang tampil pada halaman masuk ujian siswa."
+            />
+            <div className="px-5 py-5">
+              <Input
+                label="Judul Halaman Ujian"
+                value={draft.studentExamTitle ?? defaultSettings.studentExamTitle ?? ''}
+                onChange={(e) => setDraft((prev) => ({ ...prev, studentExamTitle: e.target.value }))}
+                error={errors.studentExamTitle}
+                hint="Teks besar di bagian atas halaman /ujian, misalnya “Ujian Tengah Semester Ganjil”."
+                placeholder="Mode Ujian Siswa"
+                required
+              />
             </div>
           </Card>
 
