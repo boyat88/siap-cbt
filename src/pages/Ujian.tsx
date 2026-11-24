@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   Ban,
+  BookOpen,
   CheckCircle2,
   ShieldAlert,
   Timer,
@@ -536,8 +537,12 @@ export function Ujian() {
           <Card>
             <div className="border-b border-slate-100 px-5 py-4">
               <h1 className="text-lg font-bold text-navy-950">{exam?.title}</h1>
-              <p className="text-xs text-slate-700">
-                {exam?.subject} · {exam?.durationMinutes} menit · {exam?.questions.length} soal · {examTotalPointsSafe(exam)} poin total
+              <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-inset ring-brand-100">
+                <BookOpen size={12} />
+                Mata Pelajaran: {exam?.subject ?? '-'}
+              </p>
+              <p className="mt-2 text-xs text-slate-700">
+                {exam?.durationMinutes} menit · {exam?.questions.length} soal · {examTotalPointsSafe(exam)} poin total
               </p>
               <p className="mt-1 text-xs text-slate-700">
                 Peserta: <span className="font-semibold text-navy-950">{student?.name}</span> (Kelas {student?.classId ? data.classes.find((c) => c.id === student.classId)?.name : '-'})
@@ -604,6 +609,10 @@ export function Ujian() {
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-navy-950">{exam.title}</p>
+              <p className="mt-0.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700">
+                <BookOpen size={12} />
+                Mata Pelajaran: {exam.subject}
+              </p>
               <p className="truncate text-[11px] text-slate-700">
                 {student?.name} · Kelas {classLabel(attempt.className).replace('Kelas ', '')}
               </p>
@@ -876,6 +885,11 @@ export function Ujian() {
                 )}
               </>
             )}
+
+            <p className="mt-2 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-brand-700">
+              <BookOpen size={13} />
+              Mata Pelajaran: {exam?.subject ?? '-'}
+            </p>
 
             {showResult && exam && finalAttempt && (
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-left">
