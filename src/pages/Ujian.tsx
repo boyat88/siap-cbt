@@ -27,6 +27,7 @@ import {
   OPTION_LABELS,
   VIOLATION_META,
   attemptProgress,
+  countAutoAnswers,
   detectDualScreen,
   finalizeAttempt,
   formatCountdown,
@@ -854,6 +855,7 @@ export function Ujian() {
   if (phase === 'selesai') {
     const finalAttempt = attempt
     const showResult = exam?.showResult ?? false
+    const answerCounts = exam && finalAttempt ? countAutoAnswers(exam, finalAttempt) : null
     return (
       <div className="min-h-screen bg-slate-50 px-4 py-10">
         <div className="mx-auto max-w-lg">
@@ -890,6 +892,34 @@ export function Ujian() {
               <BookOpen size={13} />
               Mata Pelajaran: {exam?.subject ?? '-'}
             </p>
+
+            {answerCounts && (
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white/85 p-3.5 text-left">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                  Ringkasan Jawaban Pilihan Ganda
+                </p>
+                {answerCounts.total === 0 ? (
+                  <p className="text-[11.5px] text-slate-500">
+                    Ujian ini tidak memiliki soal pilihan ganda.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl bg-emerald-50 px-2 py-2 ring-1 ring-inset ring-emerald-100">
+                      <p className="text-lg font-extrabold leading-none text-emerald-600">{answerCounts.correct}</p>
+                      <p className="mt-1 text-[10px] font-bold text-emerald-700">Benar</p>
+                    </div>
+                    <div className="rounded-xl bg-rose-50 px-2 py-2 ring-1 ring-inset ring-rose-100">
+                      <p className="text-lg font-extrabold leading-none text-rose-600">{answerCounts.wrong}</p>
+                      <p className="mt-1 text-[10px] font-bold text-rose-700">Salah</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-100 px-2 py-2 ring-1 ring-inset ring-slate-200">
+                      <p className="text-lg font-extrabold leading-none text-slate-600">{answerCounts.unanswered}</p>
+                      <p className="mt-1 text-[10px] font-bold text-slate-600">Belum dijawab</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {showResult && exam && finalAttempt && (
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-left">

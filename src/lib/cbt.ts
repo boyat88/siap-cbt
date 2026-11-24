@@ -101,6 +101,30 @@ export function essayPointsEarned(exam: CbtExam, attempt: CbtAttempt): number {
   }, 0)
 }
 
+/**
+ * Ringkasan jawaban pilihan ganda: benar, salah, dan belum dijawab.
+ * Esai tidak ikut dihitung karena penilaiannya dilakukan guru.
+ */
+export function countAutoAnswers(
+  exam: CbtExam,
+  attempt: CbtAttempt,
+): { correct: number; wrong: number; unanswered: number; total: number } {
+  let correct = 0
+  let wrong = 0
+  let unanswered = 0
+  for (const question of pgQuestions(exam)) {
+    const answer = attempt.answers[question.id]
+    if (answer === undefined || String(answer).trim() === '') {
+      unanswered += 1
+    } else if (answer === question.answer) {
+      correct += 1
+    } else {
+      wrong += 1
+    }
+  }
+  return { correct, wrong, unanswered, total: correct + wrong + unanswered }
+}
+
 /** Jumlah soal esai yang belum dinilai guru. */
 export function ungradedEssayCount(exam: CbtExam, attempt: CbtAttempt): number {
   return essayQuestions(exam).filter((q) => attempt.essayScores?.[q.id] === undefined).length

@@ -38,6 +38,7 @@ import {
   VIOLATION_META,
   attemptProgress,
   computeFinalScore,
+  countAutoAnswers,
   durationMinutes,
   essayPointsEarned,
   essayQuestions,
@@ -155,6 +156,9 @@ export function CbtHasil() {
           'Durasi (menit)',
           'Pelanggaran',
           'Terjawab',
+          'Benar',
+          'Salah',
+          'Belum dijawab',
           'Poin PG',
           'Poin Esai',
           'Nilai Akhir',
@@ -163,6 +167,7 @@ export function CbtHasil() {
       ]
       attempts.forEach((attempt, index) => {
         const progress = attemptProgress(exam, attempt)
+        const counts = countAutoAnswers(exam, attempt)
         nilaiRows.push([
           index + 1,
           attempt.studentId.replace(/^s_/, ''),
@@ -174,6 +179,9 @@ export function CbtHasil() {
           durationMinutes(attempt),
           attempt.violations.length,
           `${progress.answered}/${progress.total}`,
+          counts.correct,
+          counts.wrong,
+          counts.unanswered,
           attempt.autoPoints ?? 0,
           essayPointsEarned(exam, attempt),
           attempt.finalScore ?? '-',
@@ -315,6 +323,8 @@ export function CbtHasil() {
                   <th className="px-5 py-3 font-semibold">Siswa</th>
                   <th className="px-3 py-3 font-semibold">Status</th>
                   <th className="px-3 py-3 font-semibold">Progres</th>
+                  <th className="px-3 py-3 text-center font-semibold">Benar</th>
+                  <th className="px-3 py-3 text-center font-semibold">Salah</th>
                   <th className="px-3 py-3 font-semibold">Waktu</th>
                   <th className="px-3 py-3 font-semibold">Pelanggaran</th>
                   <th className="px-3 py-3 text-right font-semibold">Nilai PG</th>
@@ -329,6 +339,7 @@ export function CbtHasil() {
                   const progress = attemptProgress(exam, attempt)
                   const answeredPct = progress.total > 0 ? (progress.answered / progress.total) * 100 : 0
                   const ungraded = ungradedEssayCount(exam, attempt)
+                  const answerCounts = countAutoAnswers(exam, attempt)
                   return (
                     <tr key={attempt.id} className="transition-colors hover:bg-slate-50/60">
                       <td className="px-5 py-3">
@@ -365,6 +376,21 @@ export function CbtHasil() {
                             {progress.answered}/{progress.total}
                           </span>
                         </div>
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <span className="inline-flex min-w-8 items-center justify-center rounded-lg bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">
+                          {answerCounts.correct}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <span className="inline-flex min-w-8 items-center justify-center rounded-lg bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700">
+                          {answerCounts.wrong}
+                        </span>
+                        {answerCounts.unanswered > 0 && (
+                          <span className="mt-0.5 block text-[10px] text-slate-400">
+                            {answerCounts.unanswered} belum
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-[11px] text-slate-500">
                         {attempt.status === 'berlangsung' ? (
