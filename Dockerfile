@@ -22,9 +22,8 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/server.cjs ./server.cjs
 COPY --from=build /app/package.json ./package.json
 
-# Persistent data directory (mount a volume here in production)
+# Persistent data directory (mount a Railway volume here in production)
 RUN mkdir -p /app/server-data
-VOLUME ["/app/server-data"]
 
 ENV NODE_ENV=production
 ENV PORT=3000
