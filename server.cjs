@@ -152,6 +152,19 @@ const server = http.createServer(async (req, res) => {
         const payload = JSON.parse(raw || '{}')
         const incoming = Array.isArray(payload.sessions) ? payload.sessions : payload.session ? [payload.session] : []
         const store = readJsonFile(ATTENDANCE_FILE, { updatedAt: '', sessions: [], deleted: {} })
+        store.deleted = store.deleted && typeof store.deleted === 'object' ? store.deleted : {}
+
+        // Migrasi data lama: bawa serta daftar penghapusan agar sesi yang sudah
+        // dihapus tidak muncul kembali ketika perangkat lain melakukan sync.
+        const incomingDeleted =
+          payload.deleted && typeof payload.deleted === 'object' && !Array.isArray(payload.deleted)
+            ? payload.deleted
+            : {}
+        for (const [id, deletedAt] of Object.entries(incomingDeleted)) {
+          if (typeof id !== 'string' || typeof deletedAt !== 'string') continue
+          if (!store.deleted[id] || deletedAt > store.deleted[id]) store.deleted[id] = deletedAt
+        }
+
         const map = new Map((store.sessions || []).map((s) => [s.id, s]))
         const now = new Date().toISOString()
         let accepted = 0
@@ -172,7 +185,13 @@ const server = http.createServer(async (req, res) => {
         store.sessions = Array.from(map.values()).sort((a, b) => (b.date + b.updatedAt).localeCompare(a.date + a.updatedAt))
         store.updatedAt = now
         writeJsonFile(ATTENDANCE_FILE, store)
-        sendJson(res, 200, { ok: true, accepted, count: store.sessions.length, updatedAt: now })
+        sendJson(res, 200, {
+          ok: true,
+          accepted,
+          count: store.sessions.length,
+          deletedCount: Object.keys(store.deleted || {}).length,
+          updatedAt: now,
+        })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }
